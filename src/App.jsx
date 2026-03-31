@@ -32,7 +32,10 @@ export default function App() {
       <div className="top-bar">
         <WalletSection />
         <TokenSelect />
-        <BalanceDisplay />
+        <div className="balance-row">
+          <BalanceDisplay />
+          <LastWin />
+        </div>
       </div>
       <div className="game-area">
         <PlinkoCanvas ref={canvasRef} />
@@ -41,7 +44,6 @@ export default function App() {
         <BetControls />
         <RiskSelector />
         <DropButton onDrop={handleDrop} />
-        <LastWin />
       </div>
     </div>
   );

@@ -115,7 +115,7 @@ const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
         playLanding(mult);
       }
 
-      draw(ctx, animRef.current, W, H);
+      draw(ctx, animRef.current, W, H, settingsRef.current.risk);
       rafId = requestAnimationFrame(loop);
     }
 

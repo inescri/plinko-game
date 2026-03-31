@@ -4,13 +4,11 @@ import {
   MULTIPLIERS, getScale,
 } from './constants.js';
 
-export function getMultColor(mult) {
-  if (mult >= 10) return '#ff4757';
-  if (mult >= 5) return '#ff6b6b';
-  if (mult >= 2) return '#ffa502';
-  if (mult >= 1) return '#ffd93d';
-  return '#6bcb77';
-}
+const RISK_COLORS = {
+  low: '#6bcb77',
+  medium: '#ffa502',
+  high: '#ff4757',
+};
 
 export function computeLayout(rows, risk, W, H) {
   const s = getScale(W);
@@ -119,8 +117,7 @@ export function updateBalls(animState, W, H) {
       const winnings = ball.bet * mult;
       landings.push({ mult, winnings });
 
-      const color = getMultColor(mult);
-      animState.slotFlashes.push({ index: closestSlot, alpha: 1, color });
+      animState.slotFlashes.push({ index: closestSlot, alpha: 1 });
     }
   }
 
@@ -144,7 +141,7 @@ export function updateBalls(animState, W, H) {
   return { landings, pegHits };
 }
 
-export function draw(ctx, animState, W, H) {
+export function draw(ctx, animState, W, H, risk = 'low') {
   const s = getScale(W);
   const pegR = PEG_RADIUS * s;
   const ballR = BALL_RADIUS * s;
@@ -171,7 +168,7 @@ export function draw(ctx, animState, W, H) {
   // Slots
   for (let i = 0; i < animState.slots.length; i++) {
     const slot = animState.slots[i];
-    const color = getMultColor(slot.multiplier);
+    const color = RISK_COLORS[risk] || RISK_COLORS.low;
 
     let flashAlpha = 0;
     for (const f of animState.slotFlashes) {
@@ -188,7 +185,7 @@ export function draw(ctx, animState, W, H) {
     ctx.fill();
 
     ctx.fillStyle = color;
-    ctx.font = `bold ${Math.round(11 * s)}px system-ui`;
+    ctx.font = `bold ${Math.round(14 * s)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(slot.multiplier + '×', slot.x, slot.y);

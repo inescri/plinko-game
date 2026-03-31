@@ -2,11 +2,11 @@
 export const REF_WIDTH = 700;
 
 // Base values (at REF_WIDTH)
-export const GRAVITY = 0.35;
-export const BOUNCE_DAMPEN = 0.6;
-export const RANDOM_BOUNCE = 1.8;
-export const PEG_RADIUS = 4;
-export const BALL_RADIUS = 6;
+export const GRAVITY = 0.2;
+export const BOUNCE_DAMPEN = 0.9;
+export const RANDOM_BOUNCE = 2.8;
+export const PEG_RADIUS = 5;
+export const BALL_RADIUS = 7;
 export const TRAIL_LENGTH = 8;
 export const BALL_COLOR = '#ffd93d';
 

@@ -81,25 +81,32 @@ body {
   background-clip: text;
 }
 
+.balance-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
 .balance-display {
+  flex: 1;
   background: #1a1a2e;
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 10px 12px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .balance-label {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 2px;
   color: #888;
 }
 
 .balance-value {
-  font-size: 24px;
+  font-size: 14px;
   font-weight: 700;
   color: #6bcb77;
 }
@@ -234,11 +241,27 @@ body {
 }
 
 .last-win {
+  flex: 1;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 10px 12px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.last-win-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #888;
+}
+
+.last-win-value {
   font-size: 14px;
-  min-height: 24px;
+  font-weight: 700;
   color: #ffd93d;
-  font-weight: 600;
 }
 
 /* Token Select */
