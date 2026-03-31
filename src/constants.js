@@ -1,3 +1,7 @@
+// Reference width the original values were designed for
+export const REF_WIDTH = 700;
+
+// Base values (at REF_WIDTH)
 export const GRAVITY = 0.35;
 export const BOUNCE_DAMPEN = 0.6;
 export const RANDOM_BOUNCE = 1.8;
@@ -5,6 +9,11 @@ export const PEG_RADIUS = 4;
 export const BALL_RADIUS = 6;
 export const TRAIL_LENGTH = 8;
 export const BALL_COLOR = '#ffd93d';
+
+/** Returns a scale factor for the given canvas width */
+export function getScale(W) {
+  return W / REF_WIDTH;
+}
 
 export const MULTIPLIERS = {
   low: {

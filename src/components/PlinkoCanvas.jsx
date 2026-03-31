@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useGameState, useGameDispatch } from '../contexts/GameContext.jsx';
 import { useWallet } from '../contexts/WalletContext.jsx';
 import { computeLayout, updateBalls, draw } from '../engine.js';
+import { getScale } from '../constants.js';
 
 const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
   const canvasRef = useRef(null);
@@ -58,9 +59,10 @@ const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
     settingsRef.current.balance -= bet;
 
     const { W } = dimsRef.current;
+    const s = getScale(W);
     animRef.current.balls.push({
-      x: W / 2 + (Math.random() - 0.5) * 20,
-      y: 20,
+      x: W / 2 + (Math.random() - 0.5) * 20 * s,
+      y: 20 * s,
       vx: 0,
       vy: 0,
       trail: [],

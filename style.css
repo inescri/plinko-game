@@ -24,21 +24,37 @@ body {
 
 .container {
   display: flex;
-  gap: 24px;
-  padding: 24px;
-  max-width: 1100px;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
 }
 
 .game-area {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #1a1a2e;
   border-radius: 16px;
   overflow: hidden;
-  min-height: 600px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.bottom-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
 }
 
 #plinko-canvas {
@@ -48,8 +64,7 @@ body {
 }
 
 .controls-panel {
-  width: 280px;
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -69,7 +84,7 @@ body {
 .balance-display {
   background: #1a1a2e;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -161,28 +176,34 @@ body {
   font-size: 12px;
 }
 
-.risk-selector,
-.row-selector {
+.risk-selector {
   display: flex;
   gap: 6px;
 }
 
-.risk-btn,
-.row-btn {
+.risk-btn {
   flex: 1;
   padding: 8px 4px;
   font-size: 12px;
   text-align: center;
 }
 
-.risk-btn.active,
-.row-btn.active {
+/* Risk button colors */
+.risk-btn.risk-low.active {
   background: #6bcb77;
   color: #0f0e17;
 }
+.risk-btn.risk-medium.active {
+  background: #ffa502;
+  color: #0f0e17;
+}
+.risk-btn.risk-high.active {
+  background: #ff4757;
+  color: #0f0e17;
+}
 
+/* Drop button — colored by risk */
 .btn-drop {
-  background: linear-gradient(135deg, #6bcb77, #4a9e5a);
   color: #0f0e17;
   font-size: 16px;
   font-weight: 700;
@@ -191,8 +212,25 @@ body {
   margin-top: 8px;
 }
 
-.btn-drop:hover {
+.btn-drop.drop-low {
+  background: linear-gradient(135deg, #6bcb77, #4a9e5a);
+}
+.btn-drop.drop-low:hover {
   background: linear-gradient(135deg, #7dd889, #6bcb77);
+}
+
+.btn-drop.drop-medium {
+  background: linear-gradient(135deg, #ffa502, #e08e00);
+}
+.btn-drop.drop-medium:hover {
+  background: linear-gradient(135deg, #ffb732, #ffa502);
+}
+
+.btn-drop.drop-high {
+  background: linear-gradient(135deg, #ff4757, #d63043);
+}
+.btn-drop.drop-high:hover {
+  background: linear-gradient(135deg, #ff6b78, #ff4757);
 }
 
 .last-win {
@@ -255,10 +293,10 @@ body {
 .wallet-connected {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   background: #1a1a2e;
+  justify-content: space-between;
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   gap: 10px;
 }
 
@@ -299,17 +337,17 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .container {
-    flex-direction: column;
-    padding: 12px;
+    padding: 8px 12px;
+    gap: 12px;
   }
 
-  .controls-panel {
-    width: 100%;
+  .top-bar {
+    gap: 8px;
   }
 
-  .game-area {
-    min-height: 400px;
+  .title {
+    font-size: 22px;
   }
 }

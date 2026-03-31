@@ -1,7 +1,7 @@
 import {
   GRAVITY, BOUNCE_DAMPEN, RANDOM_BOUNCE,
   PEG_RADIUS, BALL_RADIUS, TRAIL_LENGTH, BALL_COLOR,
-  MULTIPLIERS,
+  MULTIPLIERS, getScale,
 } from './constants.js';
 
 export function getMultColor(mult) {
@@ -13,9 +13,10 @@ export function getMultColor(mult) {
 }
 
 export function computeLayout(rows, risk, W, H) {
-  const padding = 40;
-  const topY = 50;
-  const bottomY = H - 60;
+  const s = getScale(W);
+  const padding = 40 * s;
+  const topY = 50 * s;
+  const bottomY = H - 60 * s;
   const availableH = bottomY - topY;
   const rowSpacing = availableH / (rows + 1);
   const pegSpacingX = Math.min(rowSpacing * 1.1, (W - padding * 2) / (rows + 2));
@@ -48,7 +49,13 @@ export function computeLayout(rows, risk, W, H) {
 
 // Mutates animState in place. Returns array of landing events: [{ mult, winnings }]
 export function updateBalls(animState, W, H) {
-  const bottomY = H - 60;
+  const s = getScale(W);
+  const bottomY = H - 60 * s;
+  const ballR = BALL_RADIUS * s;
+  const pegR = PEG_RADIUS * s;
+  const gravity = GRAVITY * s;
+  const randomBounce = RANDOM_BOUNCE * s;
+  const minVy = 0.5 * s;
   const landings = [];
 
   for (const ball of animState.balls) {
@@ -57,7 +64,7 @@ export function updateBalls(animState, W, H) {
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > TRAIL_LENGTH) ball.trail.shift();
 
-    ball.vy += GRAVITY;
+    ball.vy += gravity;
     ball.x += ball.vx;
     ball.y += ball.vy;
 
@@ -65,7 +72,7 @@ export function updateBalls(animState, W, H) {
       const dx = ball.x - peg.x;
       const dy = ball.y - peg.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const minDist = BALL_RADIUS + PEG_RADIUS;
+      const minDist = ballR + pegR;
 
       if (dist < minDist) {
         const nx = dx / dist;
@@ -79,19 +86,19 @@ export function updateBalls(animState, W, H) {
 
         ball.vx *= BOUNCE_DAMPEN;
         ball.vy *= BOUNCE_DAMPEN;
-        ball.vx += (Math.random() - 0.5) * RANDOM_BOUNCE;
+        ball.vx += (Math.random() - 0.5) * randomBounce;
 
-        if (ball.vy < 0.5) ball.vy = 0.5;
+        if (ball.vy < minVy) ball.vy = minVy;
         peg.glow = 1;
       }
     }
 
-    if (ball.x < BALL_RADIUS) {
-      ball.x = BALL_RADIUS;
+    if (ball.x < ballR) {
+      ball.x = ballR;
       ball.vx = Math.abs(ball.vx) * 0.5;
     }
-    if (ball.x > W - BALL_RADIUS) {
-      ball.x = W - BALL_RADIUS;
+    if (ball.x > W - ballR) {
+      ball.x = W - ballR;
       ball.vx = -Math.abs(ball.vx) * 0.5;
     }
 
@@ -136,6 +143,10 @@ export function updateBalls(animState, W, H) {
 }
 
 export function draw(ctx, animState, W, H) {
+  const s = getScale(W);
+  const pegR = PEG_RADIUS * s;
+  const ballR = BALL_RADIUS * s;
+
   ctx.clearRect(0, 0, W, H);
 
   // Pegs
@@ -143,13 +154,13 @@ export function draw(ctx, animState, W, H) {
     const baseAlpha = 0.6;
     const glowAlpha = peg.glow * 0.4;
     ctx.beginPath();
-    ctx.arc(peg.x, peg.y, PEG_RADIUS + peg.glow * 3, 0, Math.PI * 2);
+    ctx.arc(peg.x, peg.y, pegR + peg.glow * 3 * s, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha + glowAlpha})`;
     ctx.fill();
 
     if (peg.glow > 0) {
       ctx.beginPath();
-      ctx.arc(peg.x, peg.y, PEG_RADIUS + 8, 0, Math.PI * 2);
+      ctx.arc(peg.x, peg.y, pegR + 8 * s, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255, 217, 61, ${peg.glow * 0.2})`;
       ctx.fill();
     }
@@ -165,17 +176,17 @@ export function draw(ctx, animState, W, H) {
       if (f.index === i) flashAlpha = Math.max(flashAlpha, f.alpha);
     }
 
-    const slotH = 32;
+    const slotH = 32 * s;
     const slotW = slot.width;
     ctx.fillStyle = color + (flashAlpha > 0
       ? Math.floor(40 + flashAlpha * 80).toString(16)
       : '20');
     ctx.beginPath();
-    ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6);
+    ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6 * s);
     ctx.fill();
 
     ctx.fillStyle = color;
-    ctx.font = 'bold 11px system-ui';
+    ctx.font = `bold ${Math.round(11 * s)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(slot.multiplier + '×', slot.x, slot.y);
@@ -186,7 +197,7 @@ export function draw(ctx, animState, W, H) {
     for (let i = 0; i < ball.trail.length; i++) {
       const t = ball.trail[i];
       const alpha = (i / ball.trail.length) * 0.4;
-      const r = BALL_RADIUS * (i / ball.trail.length) * 0.6;
+      const r = ballR * (i / ball.trail.length) * 0.6;
       ctx.beginPath();
       ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255, 217, 61, ${alpha})`;
@@ -198,12 +209,12 @@ export function draw(ctx, animState, W, H) {
   for (const ball of animState.balls) {
     if (!ball.active) continue;
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+    ctx.arc(ball.x, ball.y, ballR, 0, Math.PI * 2);
     ctx.fillStyle = BALL_COLOR;
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, BALL_RADIUS + 4, 0, Math.PI * 2);
+    ctx.arc(ball.x, ball.y, ballR + 4 * s, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255, 217, 61, 0.2)';
     ctx.fill();
   }

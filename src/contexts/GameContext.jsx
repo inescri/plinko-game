@@ -23,9 +23,7 @@ function gameReducer(state, action) {
       return { ...state, bet: action.payload };
     case 'SET_RISK':
       return { ...state, risk: action.payload };
-    case 'SET_ROWS':
-      return { ...state, rows: action.payload };
-    case 'SET_LAST_WIN':
+case 'SET_LAST_WIN':
       return { ...state, lastWin: action.payload };
     default:
       return state;

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
 import PlinkoCanvas from './components/PlinkoCanvas.jsx';
-import ControlsPanel from './components/ControlsPanel.jsx';
+import WalletSection from './components/WalletSection.jsx';
+import TokenSelect from './components/TokenSelect.jsx';
+import BalanceDisplay from './components/BalanceDisplay.jsx';
+import BetControls from './components/BetControls.jsx';
+import RiskSelector from './components/RiskSelector.jsx';
+import DropButton from './components/DropButton.jsx';
+import LastWin from './components/LastWin.jsx';
 
 export default function App() {
   const canvasRef = useRef(null);
@@ -23,10 +29,20 @@ export default function App() {
 
   return (
     <div className="container">
+      <div className="top-bar">
+        <WalletSection />
+        <TokenSelect />
+        <BalanceDisplay />
+      </div>
       <div className="game-area">
         <PlinkoCanvas ref={canvasRef} />
       </div>
-      <ControlsPanel onDrop={handleDrop} />
+      <div className="bottom-bar">
+        <BetControls />
+        <RiskSelector />
+        <DropButton onDrop={handleDrop} />
+        <LastWin />
+      </div>
     </div>
   );
 }

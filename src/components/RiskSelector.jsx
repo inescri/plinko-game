@@ -13,7 +13,7 @@ export default function RiskSelector() {
         {RISKS.map((r) => (
           <button
             key={r}
-            className={`btn risk-btn${risk === r ? ' active' : ''}`}
+            className={`btn risk-btn risk-${r}${risk === r ? ' active' : ''}`}
             onClick={() => dispatch({ type: 'SET_RISK', payload: r })}
           >
             {r.charAt(0).toUpperCase() + r.slice(1)}
