@@ -3,74 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plinko</title>
-  <link rel="stylesheet" href="style.css">
+  <title>ODIN PLINKO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <div class="game-area">
-      <canvas id="plinko-canvas"></canvas>
-    </div>
-    <div class="controls-panel">
-      <div class="wallet-section">
-        <button class="btn btn-connect" id="btn-connect">Connect Wallet</button>
-        <div class="wallet-connected" id="wallet-connected" style="display: none;">
-          <div class="wallet-info">
-            <span class="wallet-status">Connected</span>
-            <span class="wallet-principal" id="wallet-principal"></span>
-          </div>
-          <button class="btn btn-disconnect" id="btn-disconnect">Disconnect</button>
-        </div>
-      </div>
-
-      <h1 class="title">PLINKO</h1>
-
-      <div class="control-group">
-        <label>Token</label>
-        <select id="token-select" disabled>
-          <option value="" disabled selected>Connect wallet first</option>
-        </select>
-      </div>
-
-      <div class="balance-display">
-        <span class="balance-label">Token Balance</span>
-        <span class="balance-value" id="balance">0.00</span>
-      </div>
-
-      <div class="control-group">
-        <label>Bet Amount</label>
-        <div class="bet-controls">
-          <button class="btn btn-sm" id="btn-half">½</button>
-          <input type="number" id="bet-input" value="10" min="1" step="1">
-          <button class="btn btn-sm" id="btn-double">2×</button>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label>Risk</label>
-        <div class="risk-selector">
-          <button class="btn risk-btn active" data-risk="low">Low</button>
-          <button class="btn risk-btn" data-risk="medium">Medium</button>
-          <button class="btn risk-btn" data-risk="high">High</button>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label>Rows</label>
-        <div class="row-selector">
-          <button class="btn row-btn" data-rows="8">8</button>
-          <button class="btn row-btn" data-rows="10">10</button>
-          <button class="btn row-btn active" data-rows="12">12</button>
-          <button class="btn row-btn" data-rows="14">14</button>
-          <button class="btn row-btn" data-rows="16">16</button>
-        </div>
-      </div>
-
-      <button class="btn btn-drop" id="btn-drop">Drop Ball</button>
-
-      <div class="last-win" id="last-win"></div>
-    </div>
-  </div>
-  <script type="module" src="game.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

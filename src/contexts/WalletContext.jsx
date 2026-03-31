@@ -1,0 +1,97 @@
+import { createContext, useCallback, useContext, useState } from 'react';
+import { OdinConnect } from 'odin-connect';
+import { useGameDispatch } from './GameContext.jsx';
+
+const WalletContext = createContext(null);
+
+const odinConnect = new OdinConnect({ name: 'Plinko', env: 'dev' });
+
+function truncatePrincipal(principal) {
+  if (!principal || principal.length <= 12) return principal;
+  return principal.slice(0, 5) + '...' + principal.slice(-5);
+}
+
+function computeTokenBalance(token) {
+  if (!token) return 0;
+  const decimals = token.decimals ?? 0;
+  const divisibility = token.divisibility ?? 8;
+  const divisor = Math.pow(10, divisibility + decimals);
+  return Number(token.balance) / divisor;
+}
+
+export function WalletProvider({ children }) {
+  const [connectedUser, setConnectedUser] = useState(null);
+  const [tokenBalances, setTokenBalances] = useState([]);
+  const [selectedTokenId, setSelectedTokenId] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  const dispatch = useGameDispatch();
+
+  const connectWallet = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      const width = 400;
+      const height = 700;
+      const left = Math.round((window.screenX ?? 0) + (window.outerWidth - width) / 2);
+      const top = Math.round((window.screenY ?? 0) + (window.outerHeight - height) / 2);
+      const user = await odinConnect.connect({
+        requires_api: false,
+        requires_delegation: false,
+        open: {
+          target: '_blank',
+          settings: `height=${height},width=${width},left=${left},top=${top}`,
+        },
+      });
+      setConnectedUser(user);
+
+      // Fetch token balances
+      try {
+        const balances = await user.getBalances({ page: 1, limit: 20 });
+        setTokenBalances(Array.isArray(balances) ? balances : []);
+      } catch (err) {
+        console.error('Failed to fetch token balances:', err);
+        setTokenBalances([]);
+      }
+    } catch (err) {
+      console.error('Wallet connection failed:', err);
+    } finally {
+      setIsConnecting(false);
+    }
+  }, []);
+
+  const disconnectWallet = useCallback(() => {
+    setConnectedUser(null);
+    setTokenBalances([]);
+    setSelectedTokenId('');
+    dispatch({ type: 'SET_BALANCE', payload: 0 });
+  }, [dispatch]);
+
+  const selectToken = useCallback((tokenId) => {
+    setSelectedTokenId(tokenId);
+    const token = tokenBalances.find(b => String(b.id) === String(tokenId));
+    const balance = computeTokenBalance(token || null);
+    dispatch({ type: 'SET_BALANCE', payload: balance });
+  }, [tokenBalances, dispatch]);
+
+  const value = {
+    connectedUser,
+    principal: connectedUser ? truncatePrincipal(connectedUser.principal || 'Unknown') : '',
+    tokenBalances,
+    selectedTokenId,
+    isConnecting,
+    connectWallet,
+    disconnectWallet,
+    selectToken,
+  };
+
+  return (
+    <WalletContext.Provider value={value}>
+      {children}
+    </WalletContext.Provider>
+  );
+}
+
+export function useWallet() {
+  const ctx = useContext(WalletContext);
+  if (ctx === null) throw new Error('useWallet must be used within WalletProvider');
+  return ctx;
+}
