@@ -7,7 +7,7 @@ const initialState = {
   balance: 0,
   bet: 10,
   risk: 'low',
-  rows: 16,
+  rows: 14,
   lastWin: null, // { mult, amount }
 };
 
