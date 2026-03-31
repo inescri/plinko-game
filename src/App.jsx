@@ -30,6 +30,7 @@ export default function App() {
 
   return (
     <div className="container">
+      <h1 className="title">ODIN PLINKO</h1>
       <div className="top-bar">
         <WalletSection />
         <TokenSelect />
