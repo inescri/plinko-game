@@ -5,13 +5,14 @@
 }
 
 body {
-  background: #0f0e17;
+  background: #1a1a2e;
   color: #e0e0e0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Press Start 2P', monospace;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  image-rendering: pixelated;
 }
 
 #root {
@@ -22,11 +23,20 @@ body {
   justify-content: center;
 }
 
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-align: center;
+  color: #ffd93d;
+  text-shadow: 3px 3px 0px #b8860b, -1px -1px 0px #000;
+}
+
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 16px 24px;
   max-width: 600px;
   width: 100%;
@@ -35,7 +45,7 @@ body {
 .top-bar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -43,8 +53,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a1a2e;
-  border-radius: 16px;
+  background: #0f0e17;
+  border: 4px solid #3a3a5a;
+  box-shadow: inset 0 0 0 2px #0f0e17, 0 0 0 2px #0f0e17, 4px 4px 0px #000;
   overflow: hidden;
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -53,7 +64,7 @@ body {
 .bottom-bar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -61,52 +72,52 @@ body {
   display: block;
   width: 100%;
   height: 100%;
+  image-rendering: pixelated;
 }
 
 .controls-panel {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: 4px;
   text-align: center;
-  background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffd93d;
+  text-shadow: 2px 2px 0px #b8860b;
 }
 
 .balance-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
 .balance-display {
   flex: 1;
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: #0f0e17;
+  border: 3px solid #3a3a5a;
+  box-shadow: 3px 3px 0px #000;
+  padding: 8px 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .balance-label {
-  font-size: 11px;
+  font-size: 7px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: #888;
 }
 
 .balance-value {
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 700;
   color: #6bcb77;
 }
@@ -114,11 +125,11 @@ body {
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .control-group label {
-  font-size: 12px;
+  font-size: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #888;
@@ -126,21 +137,21 @@ body {
 
 .bet-controls {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .bet-controls input {
   flex: 1;
-  background: #1a1a2e;
-  border: 2px solid #2a2a4a;
-  border-radius: 8px;
+  background: #0f0e17;
+  border: 3px solid #3a3a5a;
+  box-shadow: inset 2px 2px 0px #000;
   color: #fff;
-  font-size: 16px;
-  padding: 10px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 8px 10px;
   text-align: center;
   outline: none;
-  transition: border-color 0.2s;
 }
 
 .bet-controls input:focus {
@@ -149,66 +160,70 @@ body {
 
 .btn {
   background: #2a2a4a;
-  border: none;
-  border-radius: 8px;
+  border: 3px solid #3a3a5a;
+  box-shadow: 3px 3px 0px #000;
   color: #e0e0e0;
   cursor: pointer;
-  font-size: 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
   font-weight: 600;
-  padding: 10px 16px;
-  transition: all 0.2s;
+  padding: 8px 12px;
+  transition: none;
 }
 
 .btn:hover {
   background: #3a3a5a;
+  color: #fff;
 }
 
 .btn:active {
-  transform: scale(0.96);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(2px, 2px);
 }
 
 .btn-sm {
-  padding: 10px 14px;
-  font-size: 13px;
+  padding: 8px 10px;
+  font-size: 8px;
 }
 
 .bet-percent-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .bet-percent-buttons .btn {
   flex: 1;
-  padding: 8px 0;
-  font-size: 12px;
+  padding: 6px 0;
+  font-size: 8px;
 }
 
 .rows-selector {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .rows-btn {
   flex: 1;
-  padding: 8px 4px;
-  font-size: 12px;
+  padding: 6px 4px;
+  font-size: 8px;
   text-align: center;
 }
 
 .rows-btn.active {
   background: #a259ff;
   color: #0f0e17;
+  border-color: #c084fc;
 }
 
 .risk-selector {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .risk-btn {
   flex: 1;
-  padding: 8px 4px;
-  font-size: 12px;
+  padding: 6px 4px;
+  font-size: 8px;
   text-align: center;
 }
 
@@ -216,67 +231,75 @@ body {
 .risk-btn.risk-low.active {
   background: #6bcb77;
   color: #0f0e17;
+  border-color: #8ddb95;
 }
 .risk-btn.risk-medium.active {
   background: #ffa502;
   color: #0f0e17;
+  border-color: #ffb732;
 }
 .risk-btn.risk-high.active {
   background: #ff4757;
   color: #0f0e17;
+  border-color: #ff6b78;
 }
 
 /* Drop button — colored by risk */
 .btn-drop {
   color: #0f0e17;
-  font-size: 16px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 14px;
+  padding: 12px;
   letter-spacing: 1px;
-  margin-top: 8px;
+  margin-top: 6px;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.3);
 }
 
 .btn-drop.drop-low {
-  background: linear-gradient(135deg, #6bcb77, #4a9e5a);
+  background: #6bcb77;
+  border-color: #8ddb95;
 }
 .btn-drop.drop-low:hover {
-  background: linear-gradient(135deg, #7dd889, #6bcb77);
+  background: #8ddb95;
 }
 
 .btn-drop.drop-medium {
-  background: linear-gradient(135deg, #ffa502, #e08e00);
+  background: #ffa502;
+  border-color: #ffb732;
 }
 .btn-drop.drop-medium:hover {
-  background: linear-gradient(135deg, #ffb732, #ffa502);
+  background: #ffb732;
 }
 
 .btn-drop.drop-high {
-  background: linear-gradient(135deg, #ff4757, #d63043);
+  background: #ff4757;
+  border-color: #ff6b78;
 }
 .btn-drop.drop-high:hover {
-  background: linear-gradient(135deg, #ff6b78, #ff4757);
+  background: #ff6b78;
 }
 
 .last-win {
   flex: 1;
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: #0f0e17;
+  border: 3px solid #3a3a5a;
+  box-shadow: 3px 3px 0px #000;
+  padding: 8px 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .last-win-label {
-  font-size: 11px;
+  font-size: 7px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: #888;
 }
 
 .last-win-value {
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 700;
   color: #ffd93d;
 }
@@ -284,20 +307,20 @@ body {
 /* Token Select */
 #token-select {
   width: 100%;
-  background: #1a1a2e;
-  border: 2px solid #2a2a4a;
-  border-radius: 8px;
+  background: #0f0e17;
+  border: 3px solid #3a3a5a;
+  box-shadow: 3px 3px 0px #000;
   color: #fff;
-  font-size: 14px;
-  padding: 10px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 8px 10px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
   appearance: none;
   -webkit-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='2' fill='none'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 10px center;
 }
 
 #token-select:focus {
@@ -313,31 +336,33 @@ body {
 .wallet-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-connect {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: #7c3aed;
+  border-color: #a855f7;
   color: #fff;
-  font-size: 14px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 12px;
+  padding: 10px;
   width: 100%;
   letter-spacing: 0.5px;
 }
 
 .btn-connect:hover {
-  background: linear-gradient(135deg, #8b5cf6, #c084fc);
+  background: #a855f7;
 }
 
 .wallet-connected {
   display: flex;
   align-items: center;
-  background: #1a1a2e;
+  background: #0f0e17;
   justify-content: space-between;
-  border-radius: 12px;
-  padding: 8px 12px;
-  gap: 10px;
+  border: 3px solid #3a3a5a;
+  box-shadow: 3px 3px 0px #000;
+  padding: 6px 10px;
+  gap: 8px;
 }
 
 .wallet-info {
@@ -348,7 +373,7 @@ body {
 }
 
 .wallet-status {
-  font-size: 11px;
+  font-size: 7px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #6bcb77;
@@ -356,9 +381,9 @@ body {
 }
 
 .wallet-principal {
-  font-size: 13px;
+  font-size: 8px;
   color: #aaa;
-  font-family: monospace;
+  font-family: 'Press Start 2P', monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -366,9 +391,10 @@ body {
 
 .btn-disconnect {
   background: #3a1a1a;
+  border-color: #ff4757;
   color: #ff6b6b;
-  font-size: 12px;
-  padding: 6px 12px;
+  font-size: 8px;
+  padding: 5px 10px;
   flex-shrink: 0;
 }
 
@@ -380,14 +406,14 @@ body {
 @media (max-width: 600px) {
   .container {
     padding: 8px 12px;
-    gap: 12px;
+    gap: 10px;
   }
 
   .top-bar {
-    gap: 8px;
+    gap: 6px;
   }
 
   .title {
-    font-size: 22px;
+    font-size: 16px;
   }
 }

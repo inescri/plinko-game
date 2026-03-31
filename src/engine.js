@@ -141,31 +141,45 @@ export function updateBalls(animState, W, H) {
   return { landings, pegHits };
 }
 
+// Snap a value to a pixel grid for crispy pixel art
+function snap(v, grid) {
+  return Math.round(v / grid) * grid;
+}
+
 export function draw(ctx, animState, W, H, risk = 'low') {
   const s = getScale(W);
   const pegR = PEG_RADIUS * s;
   const ballR = BALL_RADIUS * s;
+  const pixel = Math.max(2, Math.round(2 * s)); // pixel grid size
 
+  ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, W, H);
 
-  // Pegs
+  // Pegs — pixel-art squares
   for (const peg of animState.pegs) {
-    const baseAlpha = 0.6;
-    const glowAlpha = peg.glow * 0.4;
-    ctx.beginPath();
-    ctx.arc(peg.x, peg.y, pegR + peg.glow * 3 * s, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha + glowAlpha})`;
-    ctx.fill();
+    const size = snap(pegR * 2, pixel);
+    const x = snap(peg.x - size / 2, pixel);
+    const y = snap(peg.y - size / 2, pixel);
 
     if (peg.glow > 0) {
-      ctx.beginPath();
-      ctx.arc(peg.x, peg.y, pegR + 8 * s, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 217, 61, ${peg.glow * 0.2})`;
-      ctx.fill();
+      // Glow: larger square behind
+      const glowSize = size + pixel * 4;
+      const gx = snap(peg.x - glowSize / 2, pixel);
+      const gy = snap(peg.y - glowSize / 2, pixel);
+      ctx.fillStyle = `rgba(255, 217, 61, ${peg.glow * 0.35})`;
+      ctx.fillRect(gx, gy, glowSize, glowSize);
     }
+
+    const brightness = Math.round(150 + peg.glow * 105);
+    ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+    ctx.fillRect(x, y, size, size);
+
+    // Pixel highlight on top-left corner
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + peg.glow * 0.3})`;
+    ctx.fillRect(x, y, pixel, pixel);
   }
 
-  // Slots
+  // Slots — pixel-art rectangles
   for (let i = 0; i < animState.slots.length; i++) {
     const slot = animState.slots[i];
     const color = RISK_COLORS[risk] || RISK_COLORS.low;
@@ -175,46 +189,62 @@ export function draw(ctx, animState, W, H, risk = 'low') {
       if (f.index === i) flashAlpha = Math.max(flashAlpha, f.alpha);
     }
 
-    const slotH = 32 * s;
-    const slotW = slot.width;
-    ctx.fillStyle = color + (flashAlpha > 0
-      ? Math.floor(40 + flashAlpha * 80).toString(16)
-      : '20');
-    ctx.beginPath();
-    ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6 * s);
-    ctx.fill();
+    const slotH = snap(28 * s, pixel);
+    const slotW = snap(slot.width, pixel);
+    const sx = snap(slot.x - slotW / 2, pixel);
+    const sy = snap(slot.y - slotH / 2, pixel);
 
+    // Slot background
+    ctx.fillStyle = color + (flashAlpha > 0
+      ? Math.floor(40 + flashAlpha * 80).toString(16).padStart(2, '0')
+      : '25');
+    ctx.fillRect(sx, sy, slotW, slotH);
+
+    // Pixel border
+    ctx.strokeStyle = color + '60';
+    ctx.lineWidth = pixel;
+    ctx.strokeRect(sx, sy, slotW, slotH);
+
+    // Slot text
     ctx.fillStyle = color;
-    ctx.font = `bold ${Math.round(14 * s)}px system-ui`;
+    const fontSize = Math.max(8, Math.round(10 * s));
+    ctx.font = `${fontSize}px "Press Start 2P", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(slot.multiplier, slot.x, slot.y);
+    ctx.fillText(slot.multiplier, slot.x, slot.y + 1);
   }
 
-  // Ball trails
+  // Ball trails — pixel-art squares fading out
   for (const ball of animState.balls) {
     for (let i = 0; i < ball.trail.length; i++) {
       const t = ball.trail[i];
-      const alpha = (i / ball.trail.length) * 0.4;
-      const r = ballR * (i / ball.trail.length) * 0.6;
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
+      const alpha = (i / ball.trail.length) * 0.5;
+      const size = snap(ballR * 2 * (i / ball.trail.length) * 0.6, pixel);
+      if (size < pixel) continue;
+      const tx = snap(t.x - size / 2, pixel);
+      const ty = snap(t.y - size / 2, pixel);
       ctx.fillStyle = `rgba(255, 217, 61, ${alpha})`;
-      ctx.fill();
+      ctx.fillRect(tx, ty, size, size);
     }
   }
 
-  // Balls
+  // Balls — pixel-art squares
   for (const ball of animState.balls) {
     if (!ball.active) continue;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ballR, 0, Math.PI * 2);
-    ctx.fillStyle = BALL_COLOR;
-    ctx.fill();
+    const size = snap(ballR * 2, pixel);
+    const bx = snap(ball.x - size / 2, pixel);
+    const by = snap(ball.y - size / 2, pixel);
 
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ballR + 4 * s, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 217, 61, 0.2)';
-    ctx.fill();
+    // Main ball body
+    ctx.fillStyle = BALL_COLOR;
+    ctx.fillRect(bx, by, size, size);
+
+    // Pixel highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillRect(bx, by, pixel, pixel);
+
+    // Pixel shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(bx + size - pixel, by + size - pixel, pixel, pixel);
   }
 }
