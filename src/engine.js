@@ -57,6 +57,7 @@ export function updateBalls(animState, W, H) {
   const randomBounce = RANDOM_BOUNCE * s;
   const minVy = 0.5 * s;
   const landings = [];
+  let pegHits = 0;
 
   for (const ball of animState.balls) {
     if (!ball.active) continue;
@@ -90,6 +91,7 @@ export function updateBalls(animState, W, H) {
 
         if (ball.vy < minVy) ball.vy = minVy;
         peg.glow = 1;
+        pegHits++;
       }
     }
 
@@ -139,7 +141,7 @@ export function updateBalls(animState, W, H) {
   }
   animState.slotFlashes = animState.slotFlashes.filter(f => f.alpha > 0);
 
-  return landings;
+  return { landings, pegHits };
 }
 
 export function draw(ctx, animState, W, H) {

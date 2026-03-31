@@ -3,6 +3,7 @@ import { useGameState, useGameDispatch } from '../contexts/GameContext.jsx';
 import { useWallet } from '../contexts/WalletContext.jsx';
 import { computeLayout, updateBalls, draw } from '../engine.js';
 import { getScale } from '../constants.js';
+import { playPegHit, playLaunch, playLanding } from '../sounds.js';
 
 const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
   const canvasRef = useRef(null);
@@ -57,6 +58,7 @@ const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
     dispatchRef.current({ type: 'DEDUCT_BET', payload: bet });
     // Update local ref immediately so rapid clicks read correct balance
     settingsRef.current.balance -= bet;
+    playLaunch();
 
     const { W } = dimsRef.current;
     const s = getScale(W);
@@ -102,12 +104,15 @@ const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
 
     function loop() {
       const { W, H } = dimsRef.current;
-      const landings = updateBalls(animRef.current, W, H);
+      const { landings, pegHits } = updateBalls(animRef.current, W, H);
+
+      if (pegHits > 0) playPegHit();
 
       for (const { mult, winnings } of landings) {
         dispatchRef.current({ type: 'ADD_WINNINGS', payload: winnings });
         dispatchRef.current({ type: 'SET_LAST_WIN', payload: { mult, amount: winnings } });
         settingsRef.current.balance += winnings;
+        playLanding(mult);
       }
 
       draw(ctx, animRef.current, W, H);
