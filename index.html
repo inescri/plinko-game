@@ -13,6 +13,7 @@
     </div>
     <div class="controls-panel">
       <div class="wallet-section">
+        <button class="btn btn-connect" id="btn-connect">Connect Wallet</button>
         <div class="wallet-connected" id="wallet-connected" style="display: none;">
           <div class="wallet-info">
             <span class="wallet-status">Connected</span>
@@ -23,6 +24,13 @@
       </div>
 
       <h1 class="title">PLINKO</h1>
+
+      <div class="control-group">
+        <label>Token</label>
+        <select id="token-select" disabled>
+          <option value="" disabled selected>Connect wallet first</option>
+        </select>
+      </div>
 
       <div class="balance-display">
         <span class="balance-label">Token Balance</span>
@@ -58,7 +66,7 @@
         </div>
       </div>
 
-      <button class="btn btn-drop" id="btn-drop">Connect Wallet to Play</button>
+      <button class="btn btn-drop" id="btn-drop">Drop Ball</button>
 
       <div class="last-win" id="last-win"></div>
     </div>

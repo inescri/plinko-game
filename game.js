@@ -1,4 +1,4 @@
-import { setupWalletEvents, connectedUser, connectWallet } from './wallet.js';
+import { setupWalletEvents, connectedUser } from './wallet.js';
 
 // ── Config ──────────────────────────────────────────────────────
 const GRAVITY = 0.35;
@@ -334,10 +334,7 @@ function showWin(mult, amount) {
 
 // Controls
 document.getElementById('btn-drop').addEventListener('click', () => {
-  if (!connectedUser) {
-    connectWallet();
-    return;
-  }
+  if (!connectedUser) return;
   spawnBall();
 });
 
@@ -380,10 +377,7 @@ document.querySelectorAll('.row-btn').forEach(btn => {
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
     e.preventDefault();
-    if (!connectedUser) {
-      connectWallet();
-      return;
-    }
+    if (!connectedUser) return;
     spawnBall();
   }
 });

@@ -163,8 +163,8 @@ body {
 }
 
 .btn-drop {
-  background: linear-gradient(135deg, #9b59b6, #7d3c98);
-  color: #ffffff;
+  background: linear-gradient(135deg, #6bcb77, #4a9e5a);
+  color: #0f0e17;
   font-size: 16px;
   font-weight: 700;
   padding: 14px;
@@ -173,7 +173,7 @@ body {
 }
 
 .btn-drop:hover {
-  background: linear-gradient(135deg, #b06cc7, #9b59b6);
+  background: linear-gradient(135deg, #7dd889, #6bcb77);
 }
 
 .last-win {
@@ -182,6 +182,34 @@ body {
   min-height: 24px;
   color: #ffd93d;
   font-weight: 600;
+}
+
+/* Token Select */
+#token-select {
+  width: 100%;
+  background: #1a1a2e;
+  border: 2px solid #2a2a4a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+#token-select:focus {
+  border-color: #6bcb77;
+}
+
+#token-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Wallet */
