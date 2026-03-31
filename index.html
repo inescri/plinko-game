@@ -12,11 +12,22 @@
       <canvas id="plinko-canvas"></canvas>
     </div>
     <div class="controls-panel">
+      <div class="wallet-section">
+        <button class="btn btn-connect" id="btn-connect">Connect Wallet</button>
+        <div class="wallet-connected" id="wallet-connected" style="display: none;">
+          <div class="wallet-info">
+            <span class="wallet-status">Connected</span>
+            <span class="wallet-principal" id="wallet-principal"></span>
+          </div>
+          <button class="btn btn-disconnect" id="btn-disconnect">Disconnect</button>
+        </div>
+      </div>
+
       <h1 class="title">PLINKO</h1>
 
       <div class="balance-display">
-        <span class="balance-label">Balance</span>
-        <span class="balance-value" id="balance">$1,000.00</span>
+        <span class="balance-label">Token Balance</span>
+        <span class="balance-value" id="balance">0.00</span>
       </div>
 
       <div class="control-group">
@@ -53,6 +64,6 @@
       <div class="last-win" id="last-win"></div>
     </div>
   </div>
-  <script src="game.js"></script>
+  <script type="module" src="game.js"></script>
 </body>
 </html>

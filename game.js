@@ -1,3 +1,5 @@
+import { setupWalletEvents } from './wallet.js';
+
 // ── Config ──────────────────────────────────────────────────────
 const GRAVITY = 0.35;
 const BOUNCE_DAMPEN = 0.6;
@@ -33,8 +35,8 @@ const MULTIPLIERS = {
 };
 
 // ── State ──────────────────────────────────────────────────────
-const state = {
-  balance: 1000,
+export const state = {
+  balance: 0,
   bet: 10,
   risk: 'low',
   rows: 12,
@@ -318,14 +320,14 @@ function loop() {
 }
 
 // ── UI ─────────────────────────────────────────────────────────
-function updateBalanceDisplay() {
+export function updateBalanceDisplay() {
   document.getElementById('balance').textContent =
-    '$' + state.balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    state.balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function showWin(mult, amount) {
   const el = document.getElementById('last-win');
-  el.textContent = `${mult}× — Won $${amount.toFixed(2)}`;
+  el.textContent = `${mult}× — Won ${amount.toFixed(2)}`;
   el.style.opacity = 1;
   setTimeout(() => { el.style.opacity = 0.6; }, 1500);
 }
@@ -379,3 +381,4 @@ document.addEventListener('keydown', (e) => {
 // ── Init ───────────────────────────────────────────────────────
 resize();
 loop();
+setupWalletEvents();

@@ -184,6 +184,73 @@ body {
   font-weight: 600;
 }
 
+/* Wallet */
+.wallet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-connect {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px;
+  width: 100%;
+  letter-spacing: 0.5px;
+}
+
+.btn-connect:hover {
+  background: linear-gradient(135deg, #8b5cf6, #c084fc);
+}
+
+.wallet-connected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.wallet-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wallet-status {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6bcb77;
+  font-weight: 600;
+}
+
+.wallet-principal {
+  font-size: 13px;
+  color: #aaa;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-disconnect {
+  background: #3a1a1a;
+  color: #ff6b6b;
+  font-size: 12px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+}
+
+.btn-disconnect:hover {
+  background: #4a2a2a;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {
