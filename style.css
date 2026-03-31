@@ -163,8 +163,8 @@ body {
 }
 
 .btn-drop {
-  background: linear-gradient(135deg, #6bcb77, #4ca65c);
-  color: #0f0e17;
+  background: linear-gradient(135deg, #9b59b6, #7d3c98);
+  color: #ffffff;
   font-size: 16px;
   font-weight: 700;
   padding: 14px;
@@ -173,7 +173,7 @@ body {
 }
 
 .btn-drop:hover {
-  background: linear-gradient(135deg, #7dd889, #5cb86c);
+  background: linear-gradient(135deg, #b06cc7, #9b59b6);
 }
 
 .last-win {

@@ -5,7 +5,7 @@ const TOKEN_ID = '2jjj';
 
 const odinConnect = new OdinConnect({ name: 'Plinko', env: 'dev' });
 
-let connectedUser = null;
+export let connectedUser = null;
 
 function truncatePrincipal(principal) {
   if (!principal || principal.length <= 12) return principal;
@@ -32,22 +32,22 @@ async function fetchTokenBalance() {
 }
 
 function updateWalletUI() {
-  const connectBtn = document.getElementById('btn-connect');
   const connectedDiv = document.getElementById('wallet-connected');
   const principalSpan = document.getElementById('wallet-principal');
+  const dropBtn = document.getElementById('btn-drop');
 
   if (connectedUser) {
-    connectBtn.style.display = 'none';
     connectedDiv.style.display = 'flex';
     principalSpan.textContent = truncatePrincipal(connectedUser.principal || 'Unknown');
+    dropBtn.textContent = 'Drop Ball';
   } else {
-    connectBtn.style.display = 'block';
     connectedDiv.style.display = 'none';
     principalSpan.textContent = '';
+    dropBtn.textContent = 'Connect Wallet to Play';
   }
 }
 
-async function connectWallet() {
+export async function connectWallet() {
   try {
     const user = await odinConnect.connect({
       requires_api: true,
@@ -69,6 +69,5 @@ function disconnectWallet() {
 }
 
 export function setupWalletEvents() {
-  document.getElementById('btn-connect').addEventListener('click', connectWallet);
   document.getElementById('btn-disconnect').addEventListener('click', disconnectWallet);
 }
