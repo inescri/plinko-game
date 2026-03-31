@@ -4,6 +4,7 @@ import WalletSection from './components/WalletSection.jsx';
 import TokenSelect from './components/TokenSelect.jsx';
 import BalanceDisplay from './components/BalanceDisplay.jsx';
 import BetControls from './components/BetControls.jsx';
+import RowsSelector from './components/RowsSelector.jsx';
 import RiskSelector from './components/RiskSelector.jsx';
 import DropButton from './components/DropButton.jsx';
 import LastWin from './components/LastWin.jsx';
@@ -42,6 +43,7 @@ export default function App() {
       </div>
       <div className="bottom-bar">
         <BetControls />
+        <RowsSelector />
         <RiskSelector />
         <DropButton onDrop={handleDrop} />
       </div>

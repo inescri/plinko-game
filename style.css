@@ -47,7 +47,7 @@ body {
   border-radius: 16px;
   overflow: hidden;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
 }
 
 .bottom-bar {
@@ -181,6 +181,23 @@ body {
   flex: 1;
   padding: 8px 0;
   font-size: 12px;
+}
+
+.rows-selector {
+  display: flex;
+  gap: 6px;
+}
+
+.rows-btn {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.rows-btn.active {
+  background: #a259ff;
+  color: #0f0e17;
 }
 
 .risk-selector {

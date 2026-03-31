@@ -12,12 +12,12 @@ const RISK_COLORS = {
 
 export function computeLayout(rows, risk, W, H) {
   const s = getScale(W);
-  const padding = 40 * s;
+  const padding = 20 * s;
   const topY = 50 * s;
   const bottomY = H - 60 * s;
   const availableH = bottomY - topY;
   const rowSpacing = availableH / (rows + 1);
-  const pegSpacingX = Math.min(rowSpacing * 1.1, (W - padding * 2) / (rows + 2));
+  const pegSpacingX = (W - padding * 2) / (rows + 2);
 
   const pegs = [];
   for (let r = 0; r < rows; r++) {
@@ -188,7 +188,7 @@ export function draw(ctx, animState, W, H, risk = 'low') {
     ctx.font = `bold ${Math.round(14 * s)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(slot.multiplier + '×', slot.x, slot.y);
+    ctx.fillText(slot.multiplier, slot.x, slot.y);
   }
 
   // Ball trails

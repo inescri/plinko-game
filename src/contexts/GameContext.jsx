@@ -7,7 +7,7 @@ const initialState = {
   balance: 0,
   bet: 10,
   risk: 'low',
-  rows: 12,
+  rows: 16,
   lastWin: null, // { mult, amount }
 };
 
@@ -23,7 +23,9 @@ function gameReducer(state, action) {
       return { ...state, bet: action.payload };
     case 'SET_RISK':
       return { ...state, risk: action.payload };
-case 'SET_LAST_WIN':
+    case 'SET_ROWS':
+      return { ...state, rows: action.payload };
+    case 'SET_LAST_WIN':
       return { ...state, lastWin: action.payload };
     default:
       return state;
