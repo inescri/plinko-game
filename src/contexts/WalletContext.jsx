@@ -29,12 +29,16 @@ export function WalletProvider({ children }) {
   const connectWallet = useCallback(async () => {
     setIsConnecting(true);
     try {
+      const width = 400;
+      const height = 700;
+      const left = Math.round((window.screenX ?? 0) + (window.outerWidth - width) / 2);
+      const top = Math.round((window.screenY ?? 0) + (window.outerHeight - height) / 2);
       const user = await odinConnect.connect({
         requires_api: false,
         requires_delegation: false,
         open: {
           target: '_blank',
-          settings: 'height=600,width=400,left=200,top=200',
+          settings: `height=${height},width=${width},left=${left},top=${top}`,
         },
       });
       setConnectedUser(user);
