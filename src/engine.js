@@ -1,13 +1,13 @@
 import {
   GRAVITY, BOUNCE_DAMPEN, RANDOM_BOUNCE,
-  PEG_RADIUS, BALL_RADIUS, TRAIL_LENGTH, BALL_COLOR,
+  PEG_RADIUS, BALL_RADIUS, TRAIL_LENGTH,
   MULTIPLIERS, getScale,
 } from './constants.js';
 
 const RISK_COLORS = {
-  low: '#6bcb77',
-  medium: '#ffa502',
-  high: '#ff4757',
+  low: '#00ff87',
+  medium: '#ffc800',
+  high: '#ff3250',
 };
 
 export function computeLayout(rows, risk, W, H) {
@@ -148,27 +148,39 @@ export function draw(ctx, animState, W, H, risk = 'low') {
 
   ctx.clearRect(0, 0, W, H);
 
-  // Pegs
+  // Pegs — neon cyan dots
   for (const peg of animState.pegs) {
-    const baseAlpha = 0.6;
-    const glowAlpha = peg.glow * 0.4;
-    ctx.beginPath();
-    ctx.arc(peg.x, peg.y, pegR + peg.glow * 3 * s, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha + glowAlpha})`;
-    ctx.fill();
+    const glowStrength = peg.glow;
 
-    if (peg.glow > 0) {
+    // Outer neon glow
+    if (glowStrength > 0) {
       ctx.beginPath();
-      ctx.arc(peg.x, peg.y, pegR + 8 * s, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 217, 61, ${peg.glow * 0.2})`;
+      ctx.arc(peg.x, peg.y, pegR + 12 * s, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(188, 19, 254, ${glowStrength * 0.25})`;
       ctx.fill();
     }
+
+    // Mid glow
+    ctx.beginPath();
+    ctx.arc(peg.x, peg.y, pegR + glowStrength * 4 * s, 0, Math.PI * 2);
+    ctx.fillStyle = glowStrength > 0
+      ? `rgba(188, 19, 254, ${0.5 + glowStrength * 0.5})`
+      : 'rgba(100, 80, 180, 0.5)';
+    ctx.fill();
+
+    // Bright core
+    ctx.beginPath();
+    ctx.arc(peg.x, peg.y, pegR * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = glowStrength > 0
+      ? `rgba(220, 180, 255, ${0.8 + glowStrength * 0.2})`
+      : 'rgba(150, 130, 200, 0.6)';
+    ctx.fill();
   }
 
-  // Slots
+  // Slots — neon outlined
+  const color = RISK_COLORS[risk] || RISK_COLORS.low;
   for (let i = 0; i < animState.slots.length; i++) {
     const slot = animState.slots[i];
-    const color = RISK_COLORS[risk] || RISK_COLORS.low;
 
     let flashAlpha = 0;
     for (const f of animState.slotFlashes) {
@@ -177,44 +189,84 @@ export function draw(ctx, animState, W, H, risk = 'low') {
 
     const slotH = 32 * s;
     const slotW = slot.width;
-    ctx.fillStyle = color + (flashAlpha > 0
-      ? Math.floor(40 + flashAlpha * 80).toString(16)
-      : '20');
+
+    // Glow behind slot on flash
+    if (flashAlpha > 0) {
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 20 * flashAlpha;
+      ctx.fillStyle = color + Math.floor(flashAlpha * 60).toString(16).padStart(2, '0');
+      ctx.beginPath();
+      ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6 * s);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Slot background
+    ctx.fillStyle = color + '15';
     ctx.beginPath();
     ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6 * s);
     ctx.fill();
 
+    // Slot border
+    ctx.strokeStyle = color + '60';
+    ctx.lineWidth = 1 * s;
+    ctx.beginPath();
+    ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6 * s);
+    ctx.stroke();
+
+    // Multiplier text with glow
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
     ctx.fillStyle = color;
-    ctx.font = `bold ${Math.round(14 * s)}px system-ui`;
+    ctx.font = `bold ${Math.round(14 * s)}px 'Orbitron', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(slot.multiplier, slot.x, slot.y);
+    ctx.restore();
   }
 
-  // Ball trails
+  // Ball trails — neon cyan
   for (const ball of animState.balls) {
     for (let i = 0; i < ball.trail.length; i++) {
       const t = ball.trail[i];
-      const alpha = (i / ball.trail.length) * 0.4;
-      const r = ballR * (i / ball.trail.length) * 0.6;
+      const progress = i / ball.trail.length;
+      const alpha = progress * 0.5;
+      const r = ballR * progress * 0.6;
       ctx.beginPath();
       ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 217, 61, ${alpha})`;
+      ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
       ctx.fill();
     }
   }
 
-  // Balls
+  // Balls — neon glow
   for (const ball of animState.balls) {
     if (!ball.active) continue;
+
+    // Outer glow
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ballR, 0, Math.PI * 2);
-    ctx.fillStyle = BALL_COLOR;
+    ctx.arc(ball.x, ball.y, ballR + 8 * s, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 220, 255, 0.12)';
     ctx.fill();
 
+    // Mid glow
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ballR + 4 * s, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 217, 61, 0.2)';
+    ctx.arc(ball.x, ball.y, ballR + 3 * s, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 220, 255, 0.25)';
+    ctx.fill();
+
+    // Ball core
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ballR, 0, Math.PI * 2);
+    ctx.fillStyle = '#00dcff';
+    ctx.fill();
+
+    // Bright center
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ballR * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fill();
   }
 }

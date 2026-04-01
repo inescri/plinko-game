@@ -15,7 +15,7 @@ export default function TokenSelect() {
         onChange={(e) => selectToken(e.target.value)}
       >
         <option value="" disabled>
-          {connectedUser ? 'Select a token' : 'Connect wallet first'}
+          {connectedUser ? 'Select a token' : 'Connect odin first'}
         </option>
         {tokenBalances.map((token) => (
           <option key={token.id} value={token.id}>
