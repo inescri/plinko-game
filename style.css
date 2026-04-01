@@ -449,6 +449,12 @@ body {
   white-space: nowrap;
 }
 
+.wallet-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .btn-disconnect {
   background: rgba(255, 50, 80, 0.1);
   border: 1px solid rgba(255, 50, 80, 0.4);
@@ -461,6 +467,111 @@ body {
 .btn-disconnect:hover {
   background: rgba(255, 50, 80, 0.2);
   box-shadow: 0 0 10px rgba(255, 50, 80, 0.2);
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: rgba(15, 10, 40, 0.95);
+  border: 1px solid rgba(188, 19, 254, 0.4);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow:
+    0 0 30px rgba(188, 19, 254, 0.2),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(188, 19, 254, 0.6);
+  text-transform: uppercase;
+}
+
+.modal-balance-info {
+  font-size: 13px;
+  color: rgba(0, 255, 200, 0.7);
+  text-align: right;
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-weight: 600;
+}
+
+.modal-input {
+  width: 100%;
+  background: rgba(15, 10, 40, 0.8);
+  border: 1px solid rgba(188, 19, 254, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 12px;
+  text-align: center;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.modal-input:focus {
+  border-color: #bc13fe;
+  box-shadow: 0 0 12px rgba(188, 19, 254, 0.3);
+}
+
+.btn-deposit {
+  background: linear-gradient(135deg, rgba(188, 19, 254, 0.3), rgba(120, 0, 255, 0.2));
+  border: 1px solid #bc13fe;
+  color: #e0c0ff;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px;
+  width: 100%;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  box-shadow: 0 0 20px rgba(188, 19, 254, 0.2);
+}
+
+.btn-deposit:hover {
+  background: linear-gradient(135deg, rgba(188, 19, 254, 0.45), rgba(120, 0, 255, 0.3));
+  box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
+}
+
+.btn-deposit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-open-deposit {
+  background: linear-gradient(135deg, rgba(188, 19, 254, 0.2), rgba(120, 0, 255, 0.1));
+  border: 1px solid rgba(188, 19, 254, 0.4);
+  color: #e0c0ff;
+  font-size: 12px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+}
+
+.btn-open-deposit:hover {
+  background: linear-gradient(135deg, rgba(188, 19, 254, 0.35), rgba(120, 0, 255, 0.2));
+  box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
 }
 
 /* ── Responsive ── */
