@@ -3,8 +3,8 @@ export const REF_WIDTH = 700;
 
 // Base values (at REF_WIDTH)
 export const GRAVITY = 0.2;
-export const BOUNCE_DAMPEN = 0.9;
-export const RANDOM_BOUNCE = 2.8;
+export const BOUNCE_DAMPEN = 1
+export const RANDOM_BOUNCE = 1.8;
 export const PEG_RADIUS = 5;
 export const BALL_RADIUS = 7;
 export const TRAIL_LENGTH = 8;
