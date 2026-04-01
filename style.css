@@ -356,7 +356,12 @@ body {
 }
 
 /* ── Token Select ── */
-#token-select {
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
   width: 100%;
   background: rgba(15, 10, 40, 0.8);
   border: 1px solid rgba(188, 19, 254, 0.3);
@@ -369,21 +374,87 @@ body {
   outline: none;
   cursor: pointer;
   transition: all 0.3s;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23bc13fe' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-#token-select:focus {
-  border-color: #bc13fe;
-  box-shadow: 0 0 12px rgba(188, 19, 254, 0.3);
+.custom-select-trigger:hover {
+  border-color: rgba(188, 19, 254, 0.5);
 }
 
-#token-select:disabled {
+.custom-select-trigger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.select-arrow {
+  color: #bc13fe;
+  font-size: 14px;
+}
+
+.token-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.token-image {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.token-image-placeholder {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(188, 19, 254, 0.25);
+  color: #bc13fe;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(15, 10, 40, 0.95);
+  border: 1px solid rgba(188, 19, 254, 0.3);
+  border-radius: 8px;
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.custom-select-option:hover {
+  background: rgba(188, 19, 254, 0.15);
+}
+
+.custom-select-option.selected {
+  background: rgba(188, 19, 254, 0.25);
+  color: #bc13fe;
 }
 
 /* ── Wallet ── */
