@@ -30,7 +30,7 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1 className="title">ODIN PLINKO</h1>
+      <h1 className="title">PLINKODIN</h1>
       <div className="top-bar">
         <WalletSection />
         <TokenSelect />
