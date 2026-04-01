@@ -177,9 +177,24 @@ export function draw(ctx, animState, W, H, risk = 'low') {
     ctx.fill();
   }
 
-  // Slots — neon outlined
+  // Slots — neon outlined with likelihood-based bottom border
   const color = RISK_COLORS[risk] || RISK_COLORS.low;
-  for (let i = 0; i < animState.slots.length; i++) {
+  const numSlots = animState.slots.length;
+  const rows = numSlots - 1;
+
+  // Compute binomial probabilities for each slot
+  const probs = [];
+  for (let i = 0; i < numSlots; i++) {
+    // log(C(rows, i)) = sum of log differences
+    let logProb = -rows * Math.log(2);
+    for (let k = 1; k <= i; k++) {
+      logProb += Math.log(rows - k + 1) - Math.log(k);
+    }
+    probs.push(Math.exp(logProb));
+  }
+  const maxProb = Math.max(...probs);
+
+  for (let i = 0; i < numSlots; i++) {
     const slot = animState.slots[i];
 
     let flashAlpha = 0;
@@ -214,6 +229,40 @@ export function draw(ctx, animState, W, H, risk = 'low') {
     ctx.beginPath();
     ctx.roundRect(slot.x - slotW / 2, slot.y - slotH / 2, slotW, slotH, 6 * s);
     ctx.stroke();
+
+    // Bottom border colored by likelihood (green=likely, red/magenta=unlikely)
+    const likelihood = probs[i] / maxProb; // 0..1 normalized
+    // Interpolate: red (low) -> yellow (mid) -> green (high)
+    let r, g, b;
+    if (likelihood < 0.5) {
+      const t = likelihood / 0.5;
+      r = 255;
+      g = Math.round(200 * t);
+      b = Math.round(60 * (1 - t));
+    } else {
+      const t = (likelihood - 0.5) / 0.5;
+      r = Math.round(255 * (1 - t));
+      g = Math.round(200 + 55 * t);
+      b = Math.round(60 * t);
+    }
+    const borderColor = `rgb(${r}, ${g}, ${b})`;
+    const borderHeight = 3 * s;
+    const bottomY = slot.y + slotH / 2;
+
+    ctx.save();
+    ctx.shadowColor = borderColor;
+    ctx.shadowBlur = 8 * s;
+    ctx.fillStyle = borderColor;
+    ctx.beginPath();
+    ctx.roundRect(
+      slot.x - slotW / 2,
+      bottomY - borderHeight,
+      slotW,
+      borderHeight,
+      [0, 0, 6 * s, 6 * s]
+    );
+    ctx.fill();
+    ctx.restore();
 
     // Multiplier text with glow
     ctx.save();
