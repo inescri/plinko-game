@@ -22,7 +22,7 @@ export default function WalletSection() {
   return (
     <div className="wallet-section">
       <button className="btn btn-connect" onClick={connectWallet} disabled={isConnecting}>
-        {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+        {isConnecting ? 'Connecting...' : 'Connect Odin Account'}
       </button>
     </div>
   );
