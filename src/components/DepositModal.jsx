@@ -8,13 +8,17 @@ export default function DepositModal({ onClose }) {
 
   const [selectedTokenId, setSelectedTokenId] = useState('');
   const [amount, setAmount] = useState('');
+  const [isDepositing, setIsDepositing] = useState(false);
 
   const walletBalance = selectedTokenId ? getTokenBalance(selectedTokenId) : 0;
 
-  function handleDeposit() {
+  async function handleDeposit() {
     const numAmount = Number(amount);
-    if (!selectedTokenId || numAmount <= 0 || numAmount > walletBalance) return;
+    if (!selectedTokenId || numAmount <= 0 || numAmount > walletBalance || isDepositing) return;
+    setIsDepositing(true);
+    await new Promise((r) => setTimeout(r, 1500));
     dispatch({ type: 'SET_BALANCE', payload: numAmount });
+    dispatch({ type: 'SET_BET', payload: Math.floor(numAmount * 0.05) || 1 });
     onClose();
   }
 
@@ -77,10 +81,10 @@ export default function DepositModal({ onClose }) {
 
         <button
           className="btn btn-deposit"
-          disabled={!selectedTokenId || Number(amount) <= 0 || Number(amount) > walletBalance}
+          disabled={!selectedTokenId || Number(amount) <= 0 || Number(amount) > walletBalance || isDepositing}
           onClick={handleDeposit}
         >
-          Deposit
+          {isDepositing ? 'Depositing...' : 'Deposit'}
         </button>
       </div>
     </div>
