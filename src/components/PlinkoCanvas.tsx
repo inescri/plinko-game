@@ -1,22 +1,58 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { useGameState, useGameDispatch } from '../contexts/GameContext.jsx';
-import { useWallet } from '../contexts/WalletContext.jsx';
+import { forwardRef, useEffect, useImperativeHandle, useRef, type Dispatch } from 'react';
+import { useGameState, useGameDispatch } from '../contexts/GameContext.tsx';
+import { useWallet } from '../contexts/WalletContext.tsx';
 import { computeLayout, updateBalls, draw } from '../engine.js';
 import { getScale } from '../constants.js';
 import { playPegHit, playLaunch, playLanding } from '../sounds.js';
+import type { Risk, GameAction } from '../contexts/GameContext.tsx';
 
-const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
-  const canvasRef = useRef(null);
+interface Peg { x: number; y: number; glow: number }
+interface Slot { x: number; y: number; width: number; multiplier: number }
+interface Ball {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  trail: Array<{ x: number; y: number }>;
+  bet: number;
+  risk: Risk;
+  rows: number;
+  active: boolean;
+}
+interface SlotFlash { index: number; alpha: number }
+
+interface AnimationState {
+  balls: Ball[];
+  pegs: Peg[];
+  slots: Slot[];
+  slotFlashes: SlotFlash[];
+}
+
+interface Dimensions { W: number; H: number }
+
+interface Settings {
+  balance: number;
+  bet: number;
+  risk: Risk;
+  rows: number;
+}
+
+export interface PlinkoCanvasRef {
+  spawnBall: () => void;
+}
+
+const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameState = useGameState();
   const dispatch = useGameDispatch();
   const { connectedUser } = useWallet();
 
   // Refs for animation-frame data (never triggers re-renders)
-  const animRef = useRef({ balls: [], pegs: [], slots: [], slotFlashes: [] });
-  const dimsRef = useRef({ W: 0, H: 0 });
+  const animRef = useRef<AnimationState>({ balls: [], pegs: [], slots: [], slotFlashes: [] });
+  const dimsRef = useRef<Dimensions>({ W: 0, H: 0 });
 
   // Sync React state into a ref so the rAF loop can read it without stale closures
-  const settingsRef = useRef({
+  const settingsRef = useRef<Settings>({
     balance: gameState.balance,
     bet: gameState.bet,
     risk: gameState.risk,
@@ -43,7 +79,7 @@ const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
   }, [gameState.rows, gameState.risk]);
 
   // Stable dispatch ref so callbacks don't go stale
-  const dispatchRef = useRef(dispatch);
+  const dispatchRef = useRef<Dispatch<GameAction>>(dispatch);
   dispatchRef.current = dispatch;
 
   const connectedUserRef = useRef(connectedUser);
@@ -80,11 +116,14 @@ const PlinkoCanvas = forwardRef(function PlinkoCanvas(_, ref) {
   // Canvas setup + animation loop (runs once on mount)
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    let rafId;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    let rafId: number;
 
     function resize() {
+      if (!canvas) return;
       const area = canvas.parentElement;
+      if (!area) return;
       const rect = area.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       const W = rect.width;

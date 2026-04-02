@@ -1,17 +1,40 @@
-import { createContext, useCallback, useContext, useState } from "react";
-import { OdinConnect } from "odin-connect";
-import { useGameDispatch } from "./GameContext.jsx";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  OdinConnect,
+  type OdinConnectedUser,
+  type OdinBalance,
+} from "odin-connect";
+import { useGameDispatch } from "./GameContext.tsx";
 
-const WalletContext = createContext(null);
+interface WalletContextValue {
+  connectedUser: OdinConnectedUser | null;
+  principal: string;
+  tokenBalances: readonly OdinBalance[];
+  isConnecting: boolean;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  getTokenBalance: {
+    (tokenId: string | number, mode: "full"): bigint;
+    (tokenId: string | number, mode?: "display"): number;
+  };
+}
+
+const WalletContext = createContext<WalletContextValue | null>(null);
 
 const odinConnect = new OdinConnect({ name: "Plinko", env: "dev" });
 
-function truncatePrincipal(principal) {
+function truncatePrincipal(principal: string): string {
   if (!principal || principal.length <= 12) return principal;
   return principal.slice(0, 5) + "..." + principal.slice(-3);
 }
 
-function computeTokenBalance(token) {
+function computeTokenBalance(token: OdinBalance): number {
   if (!token) return 0;
   const decimals = token.decimals ?? 0;
   const divisibility = token.divisibility ?? 8;
@@ -19,9 +42,13 @@ function computeTokenBalance(token) {
   return Number(token.balance) / divisor;
 }
 
-export function WalletProvider({ children }) {
-  const [connectedUser, setConnectedUser] = useState(null);
-  const [tokenBalances, setTokenBalances] = useState([]);
+export function WalletProvider({ children }: { children: ReactNode }) {
+  const [connectedUser, setConnectedUser] = useState<OdinConnectedUser | null>(
+    null,
+  );
+  const [tokenBalances, setTokenBalances] = useState<readonly OdinBalance[]>(
+    [],
+  );
   const [isConnecting, setIsConnecting] = useState(false);
   const dispatch = useGameDispatch();
 
@@ -56,15 +83,15 @@ export function WalletProvider({ children }) {
   }, [dispatch]);
 
   const getTokenBalance = useCallback(
-    (tokenId, mode = 'display') => {
+    ((tokenId: string | number, mode: "display" | "full" = "display") => {
       const token = tokenBalances.find((b) => String(b.id) === String(tokenId));
-      if (!token) return 0;
-      return mode === 'full' ? token.balance : computeTokenBalance(token);
-    },
+      if (!token) return mode === "full" ? BigInt(0) : 0;
+      return mode === "full" ? token.balance : computeTokenBalance(token);
+    }) as WalletContextValue["getTokenBalance"],
     [tokenBalances],
   );
 
-  const value = {
+  const value: WalletContextValue = {
     connectedUser,
     principal: connectedUser
       ? truncatePrincipal(connectedUser.principal || "Unknown")
@@ -81,7 +108,7 @@ export function WalletProvider({ children }) {
   );
 }
 
-export function useWallet() {
+export function useWallet(): WalletContextValue {
   const ctx = useContext(WalletContext);
   if (ctx === null)
     throw new Error("useWallet must be used within WalletProvider");

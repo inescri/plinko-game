@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { useWallet } from '../contexts/WalletContext.jsx';
-import { useGameDispatch } from '../contexts/GameContext.jsx';
+import { useWallet } from '../contexts/WalletContext.tsx';
+import { useGameDispatch } from '../contexts/GameContext.tsx';
 
-export default function DepositModal({ onClose }) {
+interface DepositModalProps {
+  onClose: () => void;
+}
+
+export default function DepositModal({ onClose }: DepositModalProps) {
   const { tokenBalances, getTokenBalance } = useWallet();
   const dispatch = useGameDispatch();
 

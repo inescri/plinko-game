@@ -1,4 +1,4 @@
-import { useGameState } from '../contexts/GameContext.jsx';
+import { useGameState } from '../contexts/GameContext.tsx';
 
 export default function LastWin() {
   const { lastWin } = useGameState();

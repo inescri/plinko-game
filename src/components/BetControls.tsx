@@ -1,10 +1,10 @@
-import { useGameState, useGameDispatch } from '../contexts/GameContext.jsx';
+import { useGameState, useGameDispatch } from '../contexts/GameContext.tsx';
 
 export default function BetControls() {
   const { bet, balance } = useGameState();
   const dispatch = useGameDispatch();
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value) || 1;
     dispatch({ type: 'SET_BET', payload: Math.max(1, Math.min(balance, val)) });
   };

@@ -1,6 +1,10 @@
-import { useWallet } from '../contexts/WalletContext.jsx';
+import { useWallet } from '../contexts/WalletContext.tsx';
 
-export default function WalletSection({ onDeposit }) {
+interface WalletSectionProps {
+  onDeposit?: () => void;
+}
+
+export default function WalletSection({ onDeposit }: WalletSectionProps) {
   const { connectedUser, principal, isConnecting, connectWallet, disconnectWallet } = useWallet();
 
   if (connectedUser) {

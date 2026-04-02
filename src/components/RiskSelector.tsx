@@ -1,6 +1,7 @@
-import { useGameState, useGameDispatch } from '../contexts/GameContext.jsx';
+import { useGameState, useGameDispatch } from '../contexts/GameContext.tsx';
+import type { Risk } from '../contexts/GameContext.tsx';
 
-const RISKS = ['low', 'medium', 'high'];
+const RISKS: Risk[] = ['low', 'medium', 'high'];
 
 export default function RiskSelector() {
   const { risk } = useGameState();
