@@ -56,9 +56,10 @@ export function WalletProvider({ children }) {
   }, [dispatch]);
 
   const getTokenBalance = useCallback(
-    (tokenId) => {
+    (tokenId, mode = 'display') => {
       const token = tokenBalances.find((b) => String(b.id) === String(tokenId));
-      return computeTokenBalance(token || null);
+      if (!token) return 0;
+      return mode === 'full' ? token.balance : computeTokenBalance(token);
     },
     [tokenBalances],
   );
