@@ -62,6 +62,19 @@ export default function DepositModal({ onClose }) {
           />
         </div>
 
+        <div className="bet-percent-buttons">
+          {[25, 50, 75, 100].map((pct) => (
+            <button
+              key={pct}
+              className="btn"
+              disabled={!selectedTokenId}
+              onClick={() => setAmount(String(walletBalance * pct / 100))}
+            >
+              {pct}%
+            </button>
+          ))}
+        </div>
+
         <button
           className="btn btn-deposit"
           disabled={!selectedTokenId || Number(amount) <= 0 || Number(amount) > walletBalance}
