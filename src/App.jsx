@@ -20,19 +20,14 @@ export default function App() {
     canvasRef.current?.spawnBall();
   }, []);
 
-  // Auto-open deposit modal when wallet connects
+  // Auto-open deposit modal when wallet connects, close on disconnect
   useEffect(() => {
     if (connectedUser && !prevConnected.current) {
       setShowDepositModal(true);
-    }
-    prevConnected.current = !!connectedUser;
-  }, [connectedUser]);
-
-  // Close modal if wallet disconnects
-  useEffect(() => {
-    if (!connectedUser) {
+    } else if (!connectedUser) {
       setShowDepositModal(false);
     }
+    prevConnected.current = !!connectedUser;
   }, [connectedUser]);
 
   // Keyboard shortcut: Space to drop ball
