@@ -7,14 +7,22 @@
 body {
   background: #05050f;
   color: #e0e0ff;
-  font-family: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(120, 0, 255, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 50% 100%, rgba(0, 200, 255, 0.08) 0%, transparent 50%);
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(120, 0, 255, 0.12) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(0, 200, 255, 0.08) 0%,
+      transparent 50%
+    );
 }
 
 #root {
@@ -37,7 +45,7 @@ body {
 
 /* ── Title ── */
 .title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 36px;
   font-weight: 900;
   letter-spacing: 8px;
@@ -56,7 +64,14 @@ body {
 }
 
 @keyframes flicker {
-  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
     text-shadow:
       0 0 7px #fff,
       0 0 10px #fff,
@@ -67,7 +82,9 @@ body {
       0 0 102px #bc13fe,
       0 0 151px #bc13fe;
   }
-  20%, 24%, 55% {
+  20%,
+  24%,
+  55% {
     text-shadow: none;
   }
 }
@@ -108,13 +125,6 @@ body {
   height: 100%;
 }
 
-.controls-panel {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 /* ── Balance Row ── */
 .balance-row {
   display: flex;
@@ -139,7 +149,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(0, 255, 200, 0.5);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
 }
 
 .balance-value {
@@ -161,7 +171,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(188, 19, 254, 0.6);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-weight: 400;
 }
 
@@ -177,7 +187,7 @@ body {
   border: 1px solid rgba(188, 19, 254, 0.3);
   border-radius: 8px;
   color: #fff;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   padding: 10px 12px;
@@ -198,7 +208,7 @@ body {
   border-radius: 8px;
   color: #e0e0ff;
   cursor: pointer;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-size: 14px;
   font-weight: 700;
   padding: 10px 16px;
@@ -285,7 +295,7 @@ body {
 
 /* ── Drop Button ── */
 .btn-drop {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 15px;
   font-weight: 700;
   padding: 14px;
@@ -295,35 +305,65 @@ body {
 }
 
 .btn-drop.drop-low {
-  background: linear-gradient(135deg, rgba(0, 255, 135, 0.25), rgba(0, 255, 135, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 135, 0.25),
+    rgba(0, 255, 135, 0.1)
+  );
   border: 1px solid #00ff87;
   color: #00ff87;
-  box-shadow: 0 0 20px rgba(0, 255, 135, 0.2), inset 0 0 20px rgba(0, 255, 135, 0.05);
+  box-shadow:
+    0 0 20px rgba(0, 255, 135, 0.2),
+    inset 0 0 20px rgba(0, 255, 135, 0.05);
 }
 .btn-drop.drop-low:hover {
-  background: linear-gradient(135deg, rgba(0, 255, 135, 0.35), rgba(0, 255, 135, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 135, 0.35),
+    rgba(0, 255, 135, 0.15)
+  );
   box-shadow: 0 0 30px rgba(0, 255, 135, 0.35);
 }
 
 .btn-drop.drop-medium {
-  background: linear-gradient(135deg, rgba(255, 200, 0, 0.25), rgba(255, 200, 0, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 200, 0, 0.25),
+    rgba(255, 200, 0, 0.1)
+  );
   border: 1px solid #ffc800;
   color: #ffc800;
-  box-shadow: 0 0 20px rgba(255, 200, 0, 0.2), inset 0 0 20px rgba(255, 200, 0, 0.05);
+  box-shadow:
+    0 0 20px rgba(255, 200, 0, 0.2),
+    inset 0 0 20px rgba(255, 200, 0, 0.05);
 }
 .btn-drop.drop-medium:hover {
-  background: linear-gradient(135deg, rgba(255, 200, 0, 0.35), rgba(255, 200, 0, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 200, 0, 0.35),
+    rgba(255, 200, 0, 0.15)
+  );
   box-shadow: 0 0 30px rgba(255, 200, 0, 0.35);
 }
 
 .btn-drop.drop-high {
-  background: linear-gradient(135deg, rgba(255, 50, 80, 0.25), rgba(255, 50, 80, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 50, 80, 0.25),
+    rgba(255, 50, 80, 0.1)
+  );
   border: 1px solid #ff3250;
   color: #ff3250;
-  box-shadow: 0 0 20px rgba(255, 50, 80, 0.2), inset 0 0 20px rgba(255, 50, 80, 0.05);
+  box-shadow:
+    0 0 20px rgba(255, 50, 80, 0.2),
+    inset 0 0 20px rgba(255, 50, 80, 0.05);
 }
 .btn-drop.drop-high:hover {
-  background: linear-gradient(135deg, rgba(255, 50, 80, 0.35), rgba(255, 50, 80, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 50, 80, 0.35),
+    rgba(255, 50, 80, 0.15)
+  );
   box-shadow: 0 0 30px rgba(255, 50, 80, 0.35);
 }
 
@@ -345,7 +385,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(255, 200, 0, 0.5);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
 }
 
 .last-win-value {
@@ -355,108 +395,6 @@ body {
   text-shadow: 0 0 8px rgba(255, 200, 0, 0.5);
 }
 
-/* ── Token Select ── */
-.custom-select {
-  position: relative;
-  width: 100%;
-}
-
-.custom-select-trigger {
-  width: 100%;
-  background: rgba(15, 10, 40, 0.8);
-  border: 1px solid rgba(188, 19, 254, 0.3);
-  border-radius: 8px;
-  color: #fff;
-  font-family: 'Rajdhani', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 10px 12px;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.custom-select-trigger:hover {
-  border-color: rgba(188, 19, 254, 0.5);
-}
-
-.custom-select-trigger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.select-arrow {
-  color: #bc13fe;
-  font-size: 14px;
-}
-
-.token-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.token-image {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.token-image-placeholder {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(188, 19, 254, 0.25);
-  color: #bc13fe;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.custom-select-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: rgba(15, 10, 40, 0.95);
-  border: 1px solid rgba(188, 19, 254, 0.3);
-  border-radius: 8px;
-  list-style: none;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.custom-select-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  font-family: 'Rajdhani', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  transition: background 0.15s;
-}
-
-.custom-select-option:hover {
-  background: rgba(188, 19, 254, 0.15);
-}
-
-.custom-select-option.selected {
-  background: rgba(188, 19, 254, 0.25);
-  color: #bc13fe;
-}
-
 /* ── Wallet ── */
 .wallet-section {
   display: flex;
@@ -464,11 +402,21 @@ body {
   gap: 8px;
 }
 
+.wallet-error {
+  color: #ff4d6a;
+  font-size: 12px;
+  text-align: center;
+}
+
 .btn-connect {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.3), rgba(120, 0, 255, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.3),
+    rgba(120, 0, 255, 0.2)
+  );
   border: 1px solid #bc13fe;
   color: #e0c0ff;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 13px;
   font-weight: 700;
   padding: 12px;
@@ -479,7 +427,11 @@ body {
 }
 
 .btn-connect:hover {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.45), rgba(120, 0, 255, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.45),
+    rgba(120, 0, 255, 0.3)
+  );
   box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
 }
 
@@ -507,7 +459,7 @@ body {
   letter-spacing: 1px;
   color: #00ffc8;
   font-weight: 600;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   text-shadow: 0 0 6px rgba(0, 255, 200, 0.4);
 }
 
@@ -568,7 +520,7 @@ body {
 }
 
 .modal-title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 4px;
@@ -582,35 +534,67 @@ body {
   font-size: 13px;
   color: rgba(0, 255, 200, 0.7);
   text-align: right;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-weight: 600;
 }
 
-.modal-input {
+.modal-input,
+.modal select {
   width: 100%;
   background: rgba(15, 10, 40, 0.8);
   border: 1px solid rgba(188, 19, 254, 0.3);
   border-radius: 8px;
   color: #fff;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   padding: 10px 12px;
   text-align: center;
   outline: none;
   transition: all 0.3s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
 }
 
-.modal-input:focus {
+.modal select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23bc13fe' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.modal select option {
+  background: #0f0a28;
+  color: #fff;
+}
+
+.modal-input:focus,
+.modal select:focus {
   border-color: #bc13fe;
   box-shadow: 0 0 12px rgba(188, 19, 254, 0.3);
 }
 
+.deposit-error {
+  color: #ff4d6a;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+  background: rgba(255, 77, 106, 0.1);
+  border: 1px solid rgba(255, 77, 106, 0.3);
+  border-radius: 6px;
+}
+
 .btn-deposit {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.3), rgba(120, 0, 255, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.3),
+    rgba(120, 0, 255, 0.2)
+  );
   border: 1px solid #bc13fe;
   color: #e0c0ff;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 14px;
   font-weight: 700;
   padding: 12px;
@@ -621,7 +605,11 @@ body {
 }
 
 .btn-deposit:hover {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.45), rgba(120, 0, 255, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.45),
+    rgba(120, 0, 255, 0.3)
+  );
   box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
 }
 
@@ -632,7 +620,11 @@ body {
 }
 
 .btn-open-deposit {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.2), rgba(120, 0, 255, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.2),
+    rgba(120, 0, 255, 0.1)
+  );
   border: 1px solid rgba(188, 19, 254, 0.4);
   color: #e0c0ff;
   font-size: 12px;
@@ -641,7 +633,11 @@ body {
 }
 
 .btn-open-deposit:hover {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.35), rgba(120, 0, 255, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.35),
+    rgba(120, 0, 255, 0.2)
+  );
   box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
 }
 

@@ -1,12 +1,23 @@
-import { useWallet } from '../contexts/WalletContext.jsx';
+import { useWallet } from "../contexts/WalletContext.tsx";
 
-export default function WalletSection({ onDeposit }) {
-  const { connectedUser, principal, isConnecting, connectWallet, disconnectWallet } = useWallet();
+interface WalletSectionProps {
+  onDeposit?: () => void;
+}
+
+export default function WalletSection({ onDeposit }: WalletSectionProps) {
+  const {
+    connectedUser,
+    principal,
+    isConnecting,
+    connectionError,
+    connectWallet,
+    disconnectWallet,
+  } = useWallet();
 
   if (connectedUser) {
     return (
       <div className="wallet-section">
-        <div className="wallet-connected" style={{ display: 'flex' }}>
+        <div className="wallet-connected" style={{ display: "flex" }}>
           <div className="wallet-info">
             <span className="wallet-status">Connected</span>
             <span className="wallet-principal">{principal}</span>
@@ -26,9 +37,14 @@ export default function WalletSection({ onDeposit }) {
 
   return (
     <div className="wallet-section">
-      <button className="btn btn-connect" onClick={connectWallet} disabled={isConnecting}>
-        {isConnecting ? 'Connecting...' : 'Connect Odin Account'}
+      <button
+        className="btn btn-connect"
+        onClick={connectWallet}
+        disabled={isConnecting}
+      >
+        {isConnecting ? "Connecting..." : "Connect Odin Account"}
       </button>
+      {connectionError && <div className="wallet-error">{connectionError}</div>}
     </div>
   );
 }
