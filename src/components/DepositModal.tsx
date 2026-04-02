@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useWallet } from '../contexts/WalletContext.tsx';
 import { useGameDispatch } from '../contexts/GameContext.tsx';
+import { convertToOdinAmount } from 'odin-connect/dist/utils/index';
 
 interface DepositModalProps {
   onClose: () => void;
 }
 
 export default function DepositModal({ onClose }: DepositModalProps) {
-  const { tokenBalances, getTokenBalance } = useWallet();
+  const { tokenBalances, getTokenBalance, connectedUser } = useWallet();
   const dispatch = useGameDispatch();
 
   const [selectedTokenId, setSelectedTokenId] = useState('');
@@ -21,6 +22,18 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     if (!selectedTokenId || numAmount <= 0 || numAmount > walletBalance || isDepositing) return;
     setIsDepositing(true);
     await new Promise((r) => setTimeout(r, 1500));
+    const token = tokenBalances.find((t) => t.id === selectedTokenId);
+    if (!token) {
+      setIsDepositing(false);
+      return;
+    }
+    const odinAmount = convertToOdinAmount(amount, token);
+    console.log(`Depositing ${numAmount} ${token.ticker} (Odin amount: ${odinAmount}) for user ${connectedUser?.principal}`);
+    connectedUser?.icrcApprove({
+      token: selectedTokenId,
+      amount: odinAmount,
+      spender: 'sfgyi-iyaaa-aaaam-qepyq-cai', // Replace with actual canister ID
+    });
     dispatch({ type: 'SET_BALANCE', payload: numAmount });
     dispatch({ type: 'SET_BET', payload: Math.floor(numAmount * 0.05) || 1 });
     onClose();
