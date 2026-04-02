@@ -4,7 +4,7 @@ import { useGameDispatch } from "./GameContext.jsx";
 
 const WalletContext = createContext(null);
 
-const odinConnect = new OdinConnect({ name: "Plinko", env: "local" });
+const odinConnect = new OdinConnect({ name: "Plinko", env: "dev" });
 
 function truncatePrincipal(principal) {
   if (!principal || principal.length <= 12) return principal;
@@ -22,7 +22,6 @@ function computeTokenBalance(token) {
 export function WalletProvider({ children }) {
   const [connectedUser, setConnectedUser] = useState(null);
   const [tokenBalances, setTokenBalances] = useState([]);
-  const [selectedTokenId, setSelectedTokenId] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const dispatch = useGameDispatch();
 
@@ -53,19 +52,8 @@ export function WalletProvider({ children }) {
   const disconnectWallet = useCallback(() => {
     setConnectedUser(null);
     setTokenBalances([]);
-    setSelectedTokenId("");
     dispatch({ type: "SET_BALANCE", payload: 0 });
   }, [dispatch]);
-
-  const selectToken = useCallback(
-    (tokenId) => {
-      setSelectedTokenId(tokenId);
-      const token = tokenBalances.find((b) => String(b.id) === String(tokenId));
-      const balance = computeTokenBalance(token || null);
-      dispatch({ type: "SET_BALANCE", payload: balance });
-    },
-    [tokenBalances, dispatch],
-  );
 
   const getTokenBalance = useCallback(
     (tokenId) => {
@@ -81,11 +69,9 @@ export function WalletProvider({ children }) {
       ? truncatePrincipal(connectedUser.principal || "Unknown")
       : "",
     tokenBalances,
-    selectedTokenId,
     isConnecting,
     connectWallet,
     disconnectWallet,
-    selectToken,
     getTokenBalance,
   };
 
