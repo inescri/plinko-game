@@ -1,6 +1,6 @@
 import { useWallet } from '../contexts/WalletContext.jsx';
 
-export default function WalletSection() {
+export default function WalletSection({ onDeposit }) {
   const { connectedUser, principal, isConnecting, connectWallet, disconnectWallet } = useWallet();
 
   if (connectedUser) {
@@ -11,9 +11,14 @@ export default function WalletSection() {
             <span className="wallet-status">Connected</span>
             <span className="wallet-principal">{principal}</span>
           </div>
-          <button className="btn btn-disconnect" onClick={disconnectWallet}>
-            Disconnect
-          </button>
+          <div className="wallet-actions">
+            <button className="btn btn-open-deposit" onClick={onDeposit}>
+              Deposit
+            </button>
+            <button className="btn btn-disconnect" onClick={disconnectWallet}>
+              Disconnect
+            </button>
+          </div>
         </div>
       </div>
     );
