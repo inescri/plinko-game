@@ -117,11 +117,12 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     let rafId: number;
 
     function resize() {
-      if (!canvas) return;
+      if (!canvas || !ctx) return;
       const area = canvas.parentElement;
       if (!area) return;
       const rect = area.getBoundingClientRect();
@@ -142,6 +143,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
     }
 
     function loop() {
+      if (!ctx) return;
       const { W, H } = dimsRef.current;
       const { landings, pegHits } = updateBalls(animRef.current, W, H);
 

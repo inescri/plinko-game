@@ -17,6 +17,7 @@ interface WalletContextValue {
   principal: string;
   tokenBalances: readonly OdinBalance[];
   isConnecting: boolean;
+  connectionError: string | null;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   getTokenBalance: {
@@ -27,7 +28,7 @@ interface WalletContextValue {
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
-const odinConnect = new OdinConnect({ name: "Plinko", env: "dev" });
+const odinConnect = new OdinConnect({ name: "Plinko", env: "local" });
 
 function truncatePrincipal(principal: string): string {
   if (!principal || principal.length <= 12) return principal;
@@ -50,10 +51,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [],
   );
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const dispatch = useGameDispatch();
 
   const connectWallet = useCallback(async () => {
     setIsConnecting(true);
+    setConnectionError(null);
     try {
       const user = await odinConnect.connect({
         requires_api: false,
@@ -61,7 +64,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       });
       setConnectedUser(user);
 
-      // Fetch token balances
       try {
         const balances = await user.getBalances({ page: 1, limit: 20 });
         setTokenBalances(Array.isArray(balances) ? balances : []);
@@ -70,7 +72,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setTokenBalances([]);
       }
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Wallet connection failed";
       console.error("Wallet connection failed:", err);
+      setConnectionError(message);
     } finally {
       setIsConnecting(false);
     }
@@ -98,6 +102,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       : "",
     tokenBalances,
     isConnecting,
+    connectionError,
     connectWallet,
     disconnectWallet,
     getTokenBalance,

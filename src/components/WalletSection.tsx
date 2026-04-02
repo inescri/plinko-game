@@ -5,7 +5,7 @@ interface WalletSectionProps {
 }
 
 export default function WalletSection({ onDeposit }: WalletSectionProps) {
-  const { connectedUser, principal, isConnecting, connectWallet, disconnectWallet } = useWallet();
+  const { connectedUser, principal, isConnecting, connectionError, connectWallet, disconnectWallet } = useWallet();
 
   if (connectedUser) {
     return (
@@ -33,6 +33,7 @@ export default function WalletSection({ onDeposit }: WalletSectionProps) {
       <button className="btn btn-connect" onClick={connectWallet} disabled={isConnecting}>
         {isConnecting ? 'Connecting...' : 'Connect Odin Account'}
       </button>
+      {connectionError && <div className="wallet-error">{connectionError}</div>}
     </div>
   );
 }

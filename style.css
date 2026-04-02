@@ -108,13 +108,6 @@ body {
   height: 100%;
 }
 
-.controls-panel {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 /* ── Balance Row ── */
 .balance-row {
   display: flex;
@@ -355,113 +348,17 @@ body {
   text-shadow: 0 0 8px rgba(255, 200, 0, 0.5);
 }
 
-/* ── Token Select ── */
-.custom-select {
-  position: relative;
-  width: 100%;
-}
-
-.custom-select-trigger {
-  width: 100%;
-  background: rgba(15, 10, 40, 0.8);
-  border: 1px solid rgba(188, 19, 254, 0.3);
-  border-radius: 8px;
-  color: #fff;
-  font-family: 'Rajdhani', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 10px 12px;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.custom-select-trigger:hover {
-  border-color: rgba(188, 19, 254, 0.5);
-}
-
-.custom-select-trigger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.select-arrow {
-  color: #bc13fe;
-  font-size: 14px;
-}
-
-.token-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.token-image {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.token-image-placeholder {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(188, 19, 254, 0.25);
-  color: #bc13fe;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.custom-select-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: rgba(15, 10, 40, 0.95);
-  border: 1px solid rgba(188, 19, 254, 0.3);
-  border-radius: 8px;
-  list-style: none;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.custom-select-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  font-family: 'Rajdhani', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  transition: background 0.15s;
-}
-
-.custom-select-option:hover {
-  background: rgba(188, 19, 254, 0.15);
-}
-
-.custom-select-option.selected {
-  background: rgba(188, 19, 254, 0.25);
-  color: #bc13fe;
-}
-
 /* ── Wallet ── */
 .wallet-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.wallet-error {
+  color: #ff4d6a;
+  font-size: 12px;
+  text-align: center;
 }
 
 .btn-connect {
