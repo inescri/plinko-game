@@ -14,29 +14,40 @@ export default function DepositModal({ onClose }: DepositModalProps) {
   const [selectedTokenId, setSelectedTokenId] = useState('');
   const [amount, setAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const walletBalance = selectedTokenId ? getTokenBalance(selectedTokenId) : 0;
 
   async function handleDeposit() {
     const numAmount = Number(amount);
     if (!selectedTokenId || numAmount <= 0 || numAmount > walletBalance || isDepositing) return;
+
     setIsDepositing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    const token = tokenBalances.find((t) => t.id === selectedTokenId);
-    if (!token) {
+    setError(null);
+
+    try {
+      if (!connectedUser) throw new Error('Wallet not connected');
+
+      const token = tokenBalances.find((t) => t.id === selectedTokenId);
+      if (!token) throw new Error(`Token "${selectedTokenId}" not found`);
+
+      const odinAmount = convertToOdinAmount(amount, token);
+      console.log(`Depositing ${numAmount} ${token.ticker} (Odin amount: ${odinAmount}) for user ${connectedUser.principal}`);
+
+      await connectedUser.icrcApprove({
+        token: selectedTokenId,
+        amount: odinAmount,
+        spender: 'sfgyi-iyaaa-aaaam-qepyq-cai', // Replace with actual canister ID
+      });
+
+      dispatch({ type: 'SET_BALANCE', payload: numAmount });
+      dispatch({ type: 'SET_BET', payload: Math.floor(numAmount * 0.05) || 1 });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Deposit failed');
+    } finally {
       setIsDepositing(false);
-      return;
     }
-    const odinAmount = convertToOdinAmount(amount, token);
-    console.log(`Depositing ${numAmount} ${token.ticker} (Odin amount: ${odinAmount}) for user ${connectedUser?.principal}`);
-    connectedUser?.icrcApprove({
-      token: selectedTokenId,
-      amount: odinAmount,
-      spender: 'sfgyi-iyaaa-aaaam-qepyq-cai', // Replace with actual canister ID
-    });
-    dispatch({ type: 'SET_BALANCE', payload: numAmount });
-    dispatch({ type: 'SET_BET', payload: Math.floor(numAmount * 0.05) || 1 });
-    onClose();
   }
 
   return (
@@ -95,6 +106,8 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             </button>
           ))}
         </div>
+
+        {error && <div className="deposit-error">{error}</div>}
 
         <button
           className="btn btn-deposit"

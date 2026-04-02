@@ -624,6 +624,16 @@ body {
   box-shadow: 0 0 12px rgba(188, 19, 254, 0.3);
 }
 
+.deposit-error {
+  color: #ff4d6a;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+  background: rgba(255, 77, 106, 0.1);
+  border: 1px solid rgba(255, 77, 106, 0.3);
+  border-radius: 6px;
+}
+
 .btn-deposit {
   background: linear-gradient(135deg, rgba(188, 19, 254, 0.3), rgba(120, 0, 255, 0.2));
   border: 1px solid #bc13fe;
