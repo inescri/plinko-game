@@ -8,7 +8,7 @@ const odinConnect = new OdinConnect({ name: "Plinko", env: "local" });
 
 function truncatePrincipal(principal) {
   if (!principal || principal.length <= 12) return principal;
-  return principal.slice(0, 5) + "..." + principal.slice(-5);
+  return principal.slice(0, 5) + "..." + principal.slice(-3);
 }
 
 function computeTokenBalance(token) {
