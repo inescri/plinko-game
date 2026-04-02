@@ -28,7 +28,7 @@ interface WalletContextValue {
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
-const odinConnect = new OdinConnect({ name: "Plinko", env: "dev" });
+const odinConnect = new OdinConnect({ name: "Plinko", env: "_preview" });
 
 function truncatePrincipal(principal: string): string {
   if (!principal || principal.length <= 12) return principal;
