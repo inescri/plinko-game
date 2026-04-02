@@ -1,4 +1,4 @@
-import { useGameState, useGameDispatch } from '../contexts/GameContext.tsx';
+import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
 
 const ROW_OPTIONS = [8, 10, 12, 14, 16] as const;
 
@@ -13,8 +13,8 @@ export default function RowsSelector() {
         {ROW_OPTIONS.map((r) => (
           <button
             key={r}
-            className={`btn rows-btn${rows === r ? ' active' : ''}`}
-            onClick={() => dispatch({ type: 'SET_ROWS', payload: r })}
+            className={`btn rows-btn${rows === r ? " active" : ""}`}
+            onClick={() => dispatch({ type: "SET_ROWS", payload: r })}
           >
             {r}
           </button>

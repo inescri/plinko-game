@@ -1,4 +1,4 @@
-import { useGameState, useGameDispatch } from '../contexts/GameContext.tsx';
+import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
 
 export default function BetControls() {
   const { bet, balance } = useGameState();
@@ -6,7 +6,7 @@ export default function BetControls() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value) || 1;
-    dispatch({ type: 'SET_BET', payload: Math.max(1, Math.min(balance, val)) });
+    dispatch({ type: "SET_BET", payload: Math.max(1, Math.min(balance, val)) });
   };
 
   return (
@@ -26,7 +26,12 @@ export default function BetControls() {
           <button
             key={pct}
             className="btn btn-sm"
-            onClick={() => dispatch({ type: 'SET_BET', payload: Math.max(1, Math.floor(balance * pct / 100)) })}
+            onClick={() =>
+              dispatch({
+                type: "SET_BET",
+                payload: Math.max(1, Math.floor((balance * pct) / 100)),
+              })
+            }
           >
             {pct}%
           </button>

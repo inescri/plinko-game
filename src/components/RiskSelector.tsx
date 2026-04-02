@@ -1,7 +1,7 @@
-import { useGameState, useGameDispatch } from '../contexts/GameContext.tsx';
-import type { Risk } from '../contexts/GameContext.tsx';
+import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
+import type { Risk } from "../contexts/GameContext.tsx";
 
-const RISKS: Risk[] = ['low', 'medium', 'high'];
+const RISKS: Risk[] = ["low", "medium", "high"];
 
 export default function RiskSelector() {
   const { risk } = useGameState();
@@ -14,8 +14,8 @@ export default function RiskSelector() {
         {RISKS.map((r) => (
           <button
             key={r}
-            className={`btn risk-btn risk-${r}${risk === r ? ' active' : ''}`}
-            onClick={() => dispatch({ type: 'SET_RISK', payload: r })}
+            className={`btn risk-btn risk-${r}${risk === r ? " active" : ""}`}
+            onClick={() => dispatch({ type: "SET_RISK", payload: r })}
           >
             {r.charAt(0).toUpperCase() + r.slice(1)}
           </button>

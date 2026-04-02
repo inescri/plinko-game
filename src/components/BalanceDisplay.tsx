@@ -1,9 +1,9 @@
-import { useGameState } from '../contexts/GameContext.tsx';
+import { useGameState } from "../contexts/GameContext.tsx";
 
 export default function BalanceDisplay() {
   const { balance } = useGameState();
 
-  const formatted = balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formatted = balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
   return (
     <div className="balance-display">

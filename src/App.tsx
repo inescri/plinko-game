@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import PlinkoCanvas, { type PlinkoCanvasRef } from './components/PlinkoCanvas.tsx';
-import WalletSection from './components/WalletSection.tsx';
-import BalanceDisplay from './components/BalanceDisplay.tsx';
-import BetControls from './components/BetControls.tsx';
-import RowsSelector from './components/RowsSelector.tsx';
-import RiskSelector from './components/RiskSelector.tsx';
-import DropButton from './components/DropButton.tsx';
-import LastWin from './components/LastWin.tsx';
-import DepositModal from './components/DepositModal.tsx';
-import { useWallet } from './contexts/WalletContext.tsx';
+import { useCallback, useEffect, useRef, useState } from "react";
+import PlinkoCanvas, {
+  type PlinkoCanvasRef,
+} from "./components/PlinkoCanvas.tsx";
+import WalletSection from "./components/WalletSection.tsx";
+import BalanceDisplay from "./components/BalanceDisplay.tsx";
+import BetControls from "./components/BetControls.tsx";
+import RowsSelector from "./components/RowsSelector.tsx";
+import RiskSelector from "./components/RiskSelector.tsx";
+import DropButton from "./components/DropButton.tsx";
+import LastWin from "./components/LastWin.tsx";
+import DepositModal from "./components/DepositModal.tsx";
+import { useWallet } from "./contexts/WalletContext.tsx";
 
 export default function App() {
   const canvasRef = useRef<PlinkoCanvasRef>(null);
@@ -33,13 +35,13 @@ export default function App() {
   // Keyboard shortcut: Space to drop ball
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.code === 'Space' && (e.target as HTMLElement).tagName !== 'INPUT') {
+      if (e.code === "Space" && (e.target as HTMLElement).tagName !== "INPUT") {
         e.preventDefault();
         canvasRef.current?.spawnBall();
       }
     }
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
   return (

@@ -7,14 +7,22 @@
 body {
   background: #05050f;
   color: #e0e0ff;
-  font-family: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(120, 0, 255, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 50% 100%, rgba(0, 200, 255, 0.08) 0%, transparent 50%);
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(120, 0, 255, 0.12) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(0, 200, 255, 0.08) 0%,
+      transparent 50%
+    );
 }
 
 #root {
@@ -37,7 +45,7 @@ body {
 
 /* ── Title ── */
 .title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 36px;
   font-weight: 900;
   letter-spacing: 8px;
@@ -56,7 +64,14 @@ body {
 }
 
 @keyframes flicker {
-  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
     text-shadow:
       0 0 7px #fff,
       0 0 10px #fff,
@@ -67,7 +82,9 @@ body {
       0 0 102px #bc13fe,
       0 0 151px #bc13fe;
   }
-  20%, 24%, 55% {
+  20%,
+  24%,
+  55% {
     text-shadow: none;
   }
 }
@@ -132,7 +149,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(0, 255, 200, 0.5);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
 }
 
 .balance-value {
@@ -154,7 +171,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(188, 19, 254, 0.6);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-weight: 400;
 }
 
@@ -170,7 +187,7 @@ body {
   border: 1px solid rgba(188, 19, 254, 0.3);
   border-radius: 8px;
   color: #fff;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   padding: 10px 12px;
@@ -191,7 +208,7 @@ body {
   border-radius: 8px;
   color: #e0e0ff;
   cursor: pointer;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-size: 14px;
   font-weight: 700;
   padding: 10px 16px;
@@ -278,7 +295,7 @@ body {
 
 /* ── Drop Button ── */
 .btn-drop {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 15px;
   font-weight: 700;
   padding: 14px;
@@ -288,35 +305,65 @@ body {
 }
 
 .btn-drop.drop-low {
-  background: linear-gradient(135deg, rgba(0, 255, 135, 0.25), rgba(0, 255, 135, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 135, 0.25),
+    rgba(0, 255, 135, 0.1)
+  );
   border: 1px solid #00ff87;
   color: #00ff87;
-  box-shadow: 0 0 20px rgba(0, 255, 135, 0.2), inset 0 0 20px rgba(0, 255, 135, 0.05);
+  box-shadow:
+    0 0 20px rgba(0, 255, 135, 0.2),
+    inset 0 0 20px rgba(0, 255, 135, 0.05);
 }
 .btn-drop.drop-low:hover {
-  background: linear-gradient(135deg, rgba(0, 255, 135, 0.35), rgba(0, 255, 135, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 135, 0.35),
+    rgba(0, 255, 135, 0.15)
+  );
   box-shadow: 0 0 30px rgba(0, 255, 135, 0.35);
 }
 
 .btn-drop.drop-medium {
-  background: linear-gradient(135deg, rgba(255, 200, 0, 0.25), rgba(255, 200, 0, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 200, 0, 0.25),
+    rgba(255, 200, 0, 0.1)
+  );
   border: 1px solid #ffc800;
   color: #ffc800;
-  box-shadow: 0 0 20px rgba(255, 200, 0, 0.2), inset 0 0 20px rgba(255, 200, 0, 0.05);
+  box-shadow:
+    0 0 20px rgba(255, 200, 0, 0.2),
+    inset 0 0 20px rgba(255, 200, 0, 0.05);
 }
 .btn-drop.drop-medium:hover {
-  background: linear-gradient(135deg, rgba(255, 200, 0, 0.35), rgba(255, 200, 0, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 200, 0, 0.35),
+    rgba(255, 200, 0, 0.15)
+  );
   box-shadow: 0 0 30px rgba(255, 200, 0, 0.35);
 }
 
 .btn-drop.drop-high {
-  background: linear-gradient(135deg, rgba(255, 50, 80, 0.25), rgba(255, 50, 80, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 50, 80, 0.25),
+    rgba(255, 50, 80, 0.1)
+  );
   border: 1px solid #ff3250;
   color: #ff3250;
-  box-shadow: 0 0 20px rgba(255, 50, 80, 0.2), inset 0 0 20px rgba(255, 50, 80, 0.05);
+  box-shadow:
+    0 0 20px rgba(255, 50, 80, 0.2),
+    inset 0 0 20px rgba(255, 50, 80, 0.05);
 }
 .btn-drop.drop-high:hover {
-  background: linear-gradient(135deg, rgba(255, 50, 80, 0.35), rgba(255, 50, 80, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 50, 80, 0.35),
+    rgba(255, 50, 80, 0.15)
+  );
   box-shadow: 0 0 30px rgba(255, 50, 80, 0.35);
 }
 
@@ -338,7 +385,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(255, 200, 0, 0.5);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
 }
 
 .last-win-value {
@@ -362,10 +409,14 @@ body {
 }
 
 .btn-connect {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.3), rgba(120, 0, 255, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.3),
+    rgba(120, 0, 255, 0.2)
+  );
   border: 1px solid #bc13fe;
   color: #e0c0ff;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 13px;
   font-weight: 700;
   padding: 12px;
@@ -376,7 +427,11 @@ body {
 }
 
 .btn-connect:hover {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.45), rgba(120, 0, 255, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.45),
+    rgba(120, 0, 255, 0.3)
+  );
   box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
 }
 
@@ -404,7 +459,7 @@ body {
   letter-spacing: 1px;
   color: #00ffc8;
   font-weight: 600;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   text-shadow: 0 0 6px rgba(0, 255, 200, 0.4);
 }
 
@@ -465,7 +520,7 @@ body {
 }
 
 .modal-title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 4px;
@@ -479,7 +534,7 @@ body {
   font-size: 13px;
   color: rgba(0, 255, 200, 0.7);
   text-align: right;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-weight: 600;
 }
 
@@ -490,7 +545,7 @@ body {
   border: 1px solid rgba(188, 19, 254, 0.3);
   border-radius: 8px;
   color: #fff;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-family: "Rajdhani", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   padding: 10px 12px;
@@ -532,10 +587,14 @@ body {
 }
 
 .btn-deposit {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.3), rgba(120, 0, 255, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.3),
+    rgba(120, 0, 255, 0.2)
+  );
   border: 1px solid #bc13fe;
   color: #e0c0ff;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 14px;
   font-weight: 700;
   padding: 12px;
@@ -546,7 +605,11 @@ body {
 }
 
 .btn-deposit:hover {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.45), rgba(120, 0, 255, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.45),
+    rgba(120, 0, 255, 0.3)
+  );
   box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
 }
 
@@ -557,7 +620,11 @@ body {
 }
 
 .btn-open-deposit {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.2), rgba(120, 0, 255, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.2),
+    rgba(120, 0, 255, 0.1)
+  );
   border: 1px solid rgba(188, 19, 254, 0.4);
   color: #e0c0ff;
   font-size: 12px;
@@ -566,7 +633,11 @@ body {
 }
 
 .btn-open-deposit:hover {
-  background: linear-gradient(135deg, rgba(188, 19, 254, 0.35), rgba(120, 0, 255, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(188, 19, 254, 0.35),
+    rgba(120, 0, 255, 0.2)
+  );
   box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
 }
 

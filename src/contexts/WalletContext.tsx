@@ -72,7 +72,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setTokenBalances([]);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Wallet connection failed";
+      const message =
+        err instanceof Error ? err.message : "Wallet connection failed";
       console.error("Wallet connection failed:", err);
       setConnectionError(message);
     } finally {
