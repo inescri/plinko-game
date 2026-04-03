@@ -5,10 +5,15 @@ interface DropButtonProps {
 }
 
 export default function DropButton({ onDrop }: DropButtonProps) {
-  const { risk } = useGameState();
+  const { risk, bet, balance } = useGameState();
+  const disabled = balance < bet;
 
   return (
-    <button className={`btn btn-drop drop-${risk}`} onClick={onDrop}>
+    <button
+      className={`btn btn-drop drop-${risk}`}
+      onClick={onDrop}
+      disabled={disabled}
+    >
       Drop Ball
     </button>
   );

@@ -7,8 +7,21 @@ function getCtx() {
   return audioCtx;
 }
 
-/** Short tick when ball hits a peg — randomized pitch for variety */
+// Cooldown tracking to prevent overlapping sounds
+let lastPegHitTime = 0;
+let lastLaunchTime = 0;
+let lastLandingTime = 0;
+
+const PEG_HIT_COOLDOWN = 60;   // ms between peg hit sounds
+const LAUNCH_COOLDOWN = 100;    // ms between launch sounds
+const LANDING_COOLDOWN = 80;    // ms between landing sounds
+
+/** Short tick when ball hits a peg — throttled to avoid overlap */
 export function playPegHit() {
+  const now = performance.now();
+  if (now - lastPegHitTime < PEG_HIT_COOLDOWN) return;
+  lastPegHitTime = now;
+
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -24,8 +37,12 @@ export function playPegHit() {
   osc.stop(ctx.currentTime + 0.06);
 }
 
-/** Pop sound when ball is launched */
+/** Pop sound when ball is launched — throttled for rapid clicks */
 export function playLaunch() {
+  const now = performance.now();
+  if (now - lastLaunchTime < LAUNCH_COOLDOWN) return;
+  lastLaunchTime = now;
+
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -42,8 +59,12 @@ export function playLaunch() {
   osc.stop(ctx.currentTime + 0.15);
 }
 
-/** Landing sound — pitch/tone varies by multiplier */
+/** Landing sound — pitch/tone varies by multiplier, throttled */
 export function playLanding(mult) {
+  const now = performance.now();
+  if (now - lastLandingTime < LANDING_COOLDOWN) return;
+  lastLandingTime = now;
+
   const ctx = getCtx();
 
   // Base tone

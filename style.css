@@ -367,6 +367,27 @@ body {
   box-shadow: 0 0 30px rgba(255, 50, 80, 0.35);
 }
 
+.btn-drop:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: linear-gradient(
+    135deg,
+    rgba(100, 100, 120, 0.2),
+    rgba(100, 100, 120, 0.08)
+  );
+  border-color: rgba(100, 100, 120, 0.4);
+  color: rgba(160, 160, 180, 0.5);
+  box-shadow: none;
+}
+.btn-drop:disabled:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(100, 100, 120, 0.2),
+    rgba(100, 100, 120, 0.08)
+  );
+  box-shadow: none;
+}
+
 /* ── Last Win ── */
 .last-win {
   flex: 1;
