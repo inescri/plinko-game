@@ -6,13 +6,13 @@ import Result "mo:base/Result";
 import Types "types";
 import Multipliers "multipliers";
 
-actor PlinkoBackend {
+persistent actor PlinkoBackend {
 
   type Risk = Types.Risk;
   type BetRequest = Types.BetRequest;
   type BetResult = Types.BetResult;
 
-  let validRows : [Nat] = [8, 10, 12, 14, 16];
+  transient let validRows : [Nat] = [8, 10, 12, 14, 16];
 
   func isValidRows(rows : Nat) : Bool {
     for (r in validRows.vals()) {

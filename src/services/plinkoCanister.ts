@@ -1,4 +1,4 @@
-import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
+import { Actor, HttpAgent } from "@dfinity/agent";
 import { IDL } from "@dfinity/candid";
 import type { Risk } from "../contexts/GameContext.tsx";
 
@@ -54,36 +54,30 @@ function riskToVariant(risk: Risk): Record<string, null> {
 
 let cachedAgent: HttpAgent | null = null;
 
-function getAgent(): HttpAgent {
+async function getAgent(): Promise<HttpAgent> {
   if (!cachedAgent) {
-    cachedAgent = HttpAgent.create({ host: IC_HOST }) as unknown as HttpAgent;
+    cachedAgent = await HttpAgent.create({ host: IC_HOST });
     // When developing locally against a replica, fetch root key
     if (IC_HOST.includes("localhost") || IC_HOST.includes("127.0.0.1")) {
-      (cachedAgent as HttpAgent).fetchRootKey().catch(console.error);
+      await cachedAgent.fetchRootKey();
     }
   }
   return cachedAgent;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let cachedActor: ActorSubclass<any> | null = null;
-
-function getActor() {
-  if (!cachedActor) {
-    const agent = getAgent();
-    cachedActor = Actor.createActor(idlFactory, {
-      agent,
-      canisterId: CANISTER_ID,
-    });
-  }
-  return cachedActor;
+async function getActor() {
+  const agent = await getAgent();
+  return Actor.createActor(idlFactory, {
+    agent,
+    canisterId: CANISTER_ID,
+  });
 }
 
 export async function placeBet(
   risk: Risk,
   rows: number,
 ): Promise<PlaceBetResult> {
-  const actor = getActor();
+  const actor = await getActor();
   const response = (await actor.placeBet({
     risk: riskToVariant(risk),
     rows: BigInt(rows),
@@ -107,7 +101,7 @@ export async function getMultipliers(
   risk: Risk,
   rows: number,
 ): Promise<number[]> {
-  const actor = getActor();
+  const actor = await getActor();
   const response = (await actor.getMultipliers(
     riskToVariant(risk),
     BigInt(rows),
