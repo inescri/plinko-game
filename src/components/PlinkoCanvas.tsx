@@ -10,6 +10,7 @@ import { useWallet } from "../contexts/WalletContext.tsx";
 import { computeLayout, updateBalls, draw } from "../engine.js";
 import { getScale } from "../constants.js";
 import { playPegHit, playLaunch, playLanding } from "../sounds.js";
+import { placeBet } from "../services/plinkoCanister.ts";
 import type { Risk, GameAction } from "../contexts/GameContext.tsx";
 
 interface Peg {
@@ -33,6 +34,11 @@ interface Ball {
   risk: Risk;
   rows: number;
   active: boolean;
+  path?: boolean[];
+  slotIndex?: number;
+  multiplier?: number;
+  pegHitCount: number;
+  lastPegRowY: number;
 }
 interface SlotFlash {
   index: number;
@@ -44,6 +50,7 @@ interface AnimationState {
   pegs: Peg[];
   slots: Slot[];
   slotFlashes: SlotFlash[];
+  rowSpacing: number;
 }
 
 interface Dimensions {
@@ -60,9 +67,18 @@ interface Settings {
 
 export interface PlinkoCanvasRef {
   spawnBall: () => void;
+  isDropping: () => boolean;
 }
 
-const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
+interface PlinkoCanvasProps {
+  onDropStateChange?: (isDropping: boolean) => void;
+  onError?: (error: string) => void;
+}
+
+const PlinkoCanvas = forwardRef<PlinkoCanvasRef, PlinkoCanvasProps>(function PlinkoCanvas(
+  { onDropStateChange, onError },
+  ref,
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameState = useGameState();
   const dispatch = useGameDispatch();
@@ -74,6 +90,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
     pegs: [],
     slots: [],
     slotFlashes: [],
+    rowSpacing: 0,
   });
   const dimsRef = useRef<Dimensions>({ W: 0, H: 0 });
 
@@ -98,7 +115,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   useEffect(() => {
     const { W, H } = dimsRef.current;
     if (W > 0 && H > 0) {
-      const { pegs, slots } = computeLayout(
+      const { pegs, slots, rowSpacing } = computeLayout(
         gameState.rows,
         gameState.risk,
         W,
@@ -106,6 +123,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
       );
       animRef.current.pegs = pegs;
       animRef.current.slots = slots;
+      animRef.current.rowSpacing = rowSpacing;
     }
   }, [gameState.rows, gameState.risk]);
 
@@ -116,33 +134,69 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   const connectedUserRef = useRef(connectedUser);
   connectedUserRef.current = connectedUser;
 
+  const isDroppingRef = useRef(false);
+  const onDropStateChangeRef = useRef(onDropStateChange);
+  onDropStateChangeRef.current = onDropStateChange;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+
   // Spawn ball function exposed via imperative handle
-  const spawnBall = useRef(() => {
+  const spawnBall = useRef(async () => {
     if (!connectedUserRef.current) return;
+    if (isDroppingRef.current) return;
     const { balance, bet, risk, rows } = settingsRef.current;
     if (bet > balance) return;
 
+    // Optimistic bet deduction
     dispatchRef.current({ type: "DEDUCT_BET", payload: bet });
-    // Update local ref immediately so rapid clicks read correct balance
     settingsRef.current.balance -= bet;
-    playLaunch();
 
-    const { W } = dimsRef.current;
-    const s = getScale(W);
-    animRef.current.balls.push({
-      x: W / 2 + (Math.random() - 0.5) * 20 * s,
-      y: 20 * s,
-      vx: 0,
-      vy: 0,
-      trail: [],
-      bet,
-      risk,
-      rows,
-      active: true,
-    });
+    isDroppingRef.current = true;
+    onDropStateChangeRef.current?.(true);
+
+    try {
+      const result = await placeBet(risk, rows);
+
+      playLaunch();
+      const { W } = dimsRef.current;
+      const s = getScale(W);
+      animRef.current.balls.push({
+        x: W / 2 + (Math.random() - 0.5) * 20 * s,
+        y: 20 * s,
+        vx: 0,
+        vy: 0,
+        trail: [],
+        bet,
+        risk,
+        rows,
+        active: true,
+        path: result.path,
+        slotIndex: result.slotIndex,
+        multiplier: result.multiplier,
+        pegHitCount: 0,
+        lastPegRowY: 0,
+      });
+    } catch (err) {
+      // Refund on failure
+      dispatchRef.current({ type: "ADD_WINNINGS", payload: bet });
+      settingsRef.current.balance += bet;
+      onErrorRef.current?.(
+        err instanceof Error ? err.message : "Bet failed",
+      );
+    } finally {
+      isDroppingRef.current = false;
+      onDropStateChangeRef.current?.(false);
+    }
   }).current;
 
-  useImperativeHandle(ref, () => ({ spawnBall }), [spawnBall]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      spawnBall,
+      isDropping: () => isDroppingRef.current,
+    }),
+    [spawnBall],
+  );
 
   // Canvas setup + animation loop (runs once on mount)
   useEffect(() => {
@@ -168,9 +222,10 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const { rows, risk } = settingsRef.current;
-      const { pegs, slots } = computeLayout(rows, risk, W, H);
+      const { pegs, slots, rowSpacing } = computeLayout(rows, risk, W, H);
       animRef.current.pegs = pegs;
       animRef.current.slots = slots;
+      animRef.current.rowSpacing = rowSpacing;
     }
 
     function loop() {

@@ -42,7 +42,7 @@ export function computeLayout(rows, risk, W, H) {
     });
   }
 
-  return { pegs, slots };
+  return { pegs, slots, rowSpacing };
 }
 
 // Mutates animState in place. Returns array of landing events: [{ mult, winnings }]
@@ -85,7 +85,21 @@ export function updateBalls(animState, W, H) {
 
         ball.vx *= BOUNCE_DAMPEN;
         ball.vy *= BOUNCE_DAMPEN;
-        ball.vx += (Math.random() - 0.5) * randomBounce;
+
+        // Path-guided bounce: use predetermined direction if available
+        if (ball.path && ball.pegHitCount < ball.path.length) {
+          const isNewRow = !ball.lastPegRowY ||
+            (peg.y - ball.lastPegRowY) > (animState.rowSpacing * 0.3);
+          if (isNewRow) {
+            const dir = ball.path[ball.pegHitCount] ? 1 : -1;
+            ball.vx += dir * randomBounce * 0.6
+              + (Math.random() - 0.5) * randomBounce * 0.2;
+            ball.pegHitCount++;
+            ball.lastPegRowY = peg.y;
+          }
+        } else {
+          ball.vx += (Math.random() - 0.5) * randomBounce;
+        }
 
         if (ball.vy < minVy) ball.vy = minVy;
         peg.glow = 1;
@@ -104,20 +118,31 @@ export function updateBalls(animState, W, H) {
 
     if (ball.y >= bottomY) {
       ball.active = false;
-      let closestSlot = 0;
-      let closestDist = Infinity;
-      for (let i = 0; i < animState.slots.length; i++) {
-        const d = Math.abs(ball.x - animState.slots[i].x);
-        if (d < closestDist) {
-          closestDist = d;
-          closestSlot = i;
+
+      let landedSlot;
+      if (ball.slotIndex !== undefined && ball.slotIndex < animState.slots.length) {
+        // Use predetermined slot from canister
+        landedSlot = ball.slotIndex;
+      } else {
+        // Fallback: find closest slot by position
+        landedSlot = 0;
+        let closestDist = Infinity;
+        for (let i = 0; i < animState.slots.length; i++) {
+          const d = Math.abs(ball.x - animState.slots[i].x);
+          if (d < closestDist) {
+            closestDist = d;
+            landedSlot = i;
+          }
         }
       }
-      const mult = animState.slots[closestSlot].multiplier;
+
+      const mult = (ball.multiplier !== undefined)
+        ? ball.multiplier
+        : animState.slots[landedSlot].multiplier;
       const winnings = ball.bet * mult;
       landings.push({ mult, winnings });
 
-      animState.slotFlashes.push({ index: closestSlot, alpha: 1 });
+      animState.slotFlashes.push({ index: landedSlot, alpha: 1 });
     }
   }
 

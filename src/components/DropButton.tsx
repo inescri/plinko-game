@@ -2,11 +2,12 @@ import { useGameState } from "../contexts/GameContext.tsx";
 
 interface DropButtonProps {
   onDrop: () => void;
+  isLoading?: boolean;
 }
 
-export default function DropButton({ onDrop }: DropButtonProps) {
+export default function DropButton({ onDrop, isLoading }: DropButtonProps) {
   const { risk, bet, balance } = useGameState();
-  const disabled = balance < bet;
+  const disabled = balance < bet || !!isLoading;
 
   return (
     <button
@@ -14,7 +15,7 @@ export default function DropButton({ onDrop }: DropButtonProps) {
       onClick={onDrop}
       disabled={disabled}
     >
-      Drop Ball
+      {isLoading ? "Dropping..." : "Drop Ball"}
     </button>
   );
 }

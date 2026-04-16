@@ -14,6 +14,7 @@ export interface GameState {
   risk: Risk;
   rows: number;
   lastWin: { mult: number; amount: number } | null;
+  error: string | null;
 }
 
 export type GameAction =
@@ -23,7 +24,8 @@ export type GameAction =
   | { type: "SET_BET"; payload: number }
   | { type: "SET_RISK"; payload: Risk }
   | { type: "SET_ROWS"; payload: number }
-  | { type: "SET_LAST_WIN"; payload: { mult: number; amount: number } | null };
+  | { type: "SET_LAST_WIN"; payload: { mult: number; amount: number } | null }
+  | { type: "SET_ERROR"; payload: string | null };
 
 const GameStateContext = createContext<GameState | null>(null);
 const GameDispatchContext = createContext<Dispatch<GameAction> | null>(null);
@@ -34,6 +36,7 @@ const initialState: GameState = {
   risk: "low",
   rows: 14,
   lastWin: null,
+  error: null,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -52,6 +55,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, rows: action.payload };
     case "SET_LAST_WIN":
       return { ...state, lastWin: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
     default:
       return state;
   }

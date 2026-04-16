@@ -11,16 +11,32 @@ import DropButton from "./components/DropButton.tsx";
 import LastWin from "./components/LastWin.tsx";
 import DepositModal from "./components/DepositModal.tsx";
 import { useWallet } from "./contexts/WalletContext.tsx";
+import { useGameDispatch } from "./contexts/GameContext.tsx";
 
 export default function App() {
   const canvasRef = useRef<PlinkoCanvasRef>(null);
   const { connectedUser } = useWallet();
+  const dispatch = useGameDispatch();
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [isDropping, setIsDropping] = useState(false);
   const prevConnected = useRef(false);
 
   const handleDrop = useCallback(() => {
     canvasRef.current?.spawnBall();
   }, []);
+
+  const handleDropStateChange = useCallback((dropping: boolean) => {
+    setIsDropping(dropping);
+  }, []);
+
+  const handleDropError = useCallback(
+    (error: string) => {
+      dispatch({ type: "SET_ERROR", payload: error });
+      // Auto-clear error after 4 seconds
+      setTimeout(() => dispatch({ type: "SET_ERROR", payload: null }), 4000);
+    },
+    [dispatch],
+  );
 
   // Auto-open deposit modal when wallet connects, close on disconnect
   useEffect(() => {
@@ -32,10 +48,14 @@ export default function App() {
     prevConnected.current = !!connectedUser;
   }, [connectedUser]);
 
-  // Keyboard shortcut: Space to drop ball
+  // Keyboard shortcut: Space to drop ball (disabled while a drop is in flight)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.code === "Space" && (e.target as HTMLElement).tagName !== "INPUT") {
+      if (
+        e.code === "Space" &&
+        (e.target as HTMLElement).tagName !== "INPUT" &&
+        !canvasRef.current?.isDropping()
+      ) {
         e.preventDefault();
         canvasRef.current?.spawnBall();
       }
@@ -57,13 +77,17 @@ export default function App() {
         )}
       </div>
       <div className="game-area">
-        <PlinkoCanvas ref={canvasRef} />
+        <PlinkoCanvas
+          ref={canvasRef}
+          onDropStateChange={handleDropStateChange}
+          onError={handleDropError}
+        />
       </div>
       <div className="bottom-bar">
         <BetControls />
         <RowsSelector />
         <RiskSelector />
-        <DropButton onDrop={handleDrop} />
+        <DropButton onDrop={handleDrop} isLoading={isDropping} />
       </div>
       {showDepositModal && (
         <DepositModal onClose={() => setShowDepositModal(false)} />

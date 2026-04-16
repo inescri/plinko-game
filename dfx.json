@@ -1,0 +1,14 @@
+{
+  "canisters": {
+    "plinko_backend": {
+      "type": "motoko",
+      "main": "backend/plinko/main.mo"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  },
+  "version": 1
+}
