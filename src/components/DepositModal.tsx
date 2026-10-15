@@ -1,24 +1,54 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWallet } from "../contexts/WalletContext.tsx";
-import { useGameDispatch } from "../contexts/GameContext.tsx";
-import { convertToOdinAmount } from "odin-connect/dist/utils/index";
+import { OdinUtils } from "odin-connect";
 
 interface DepositModalProps {
   onClose: () => void;
 }
 
+// Replace with actual canister ID
+const SPENDER_CANISTER_ID = "sfgyi-iyaaa-aaaam-qepyq-cai";
+
 export default function DepositModal({ onClose }: DepositModalProps) {
-  const { tokenBalances, getTokenBalance, connectedUser } = useWallet();
-  const dispatch = useGameDispatch();
+  const { tokenBalances, getTokenBalance, connectedUser, request } =
+    useWallet();
 
   const [selectedTokenId, setSelectedTokenId] = useState("");
   const [amount, setAmount] = useState("");
-  const [isDepositing, setIsDepositing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  // Approve requests already settled when this modal opened must not close
+  // it or show as errors; only requests started from here count.
+  const startedRequestIds = useRef(new Set<string>());
+  const openedWithRequestId = useRef(request?.id ?? null);
+
+  const approveRequest =
+    request?.action === "icrc_approve" &&
+    request.id !== openedWithRequestId.current
+      ? request
+      : null;
+  const isDepositing = approveRequest?.status === "pending";
+
+  let error = localError;
+  if (approveRequest?.status === "rejected") {
+    error =
+      approveRequest.error === "popup_closed"
+        ? "Approval window was closed"
+        : "Approval was rejected";
+  } else if (approveRequest?.status === "failed") {
+    error = approveRequest.error ?? "Deposit failed";
+  }
+
+  // Balance was credited in WalletContext; just close once per success.
+  useEffect(() => {
+    if (approveRequest?.status !== "success") return;
+    if (startedRequestIds.current.has(approveRequest.id)) return;
+    startedRequestIds.current.add(approveRequest.id);
+    onClose();
+  }, [approveRequest, onClose]);
 
   const walletBalance = selectedTokenId ? getTokenBalance(selectedTokenId) : 0;
 
-  async function handleDeposit() {
+  function handleDeposit() {
     const numAmount = Number(amount);
     if (
       !selectedTokenId ||
@@ -28,34 +58,31 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     )
       return;
 
-    setIsDepositing(true);
-    setError(null);
+    setLocalError(null);
 
-    try {
-      if (!connectedUser) throw new Error("Wallet not connected");
-
-      const token = tokenBalances.find((t) => t.id === selectedTokenId);
-      if (!token) throw new Error(`Token "${selectedTokenId}" not found`);
-
-      const odinAmount = convertToOdinAmount(amount, token);
-      console.log(
-        `Depositing ${numAmount} ${token.ticker} (Odin amount: ${odinAmount}) for user ${connectedUser.principal}`,
-      );
-
-      await connectedUser.icrcApprove({
-        token: selectedTokenId,
-        amount: odinAmount,
-        spender: "sfgyi-iyaaa-aaaam-qepyq-cai", // Replace with actual canister ID
-      });
-
-      dispatch({ type: "SET_BALANCE", payload: numAmount });
-      dispatch({ type: "SET_BET", payload: Math.floor(numAmount * 0.05) || 1 });
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Deposit failed");
-    } finally {
-      setIsDepositing(false);
+    if (!connectedUser) {
+      setLocalError("Wallet not connected");
+      return;
     }
+    const token = tokenBalances.find((t) => t.id === selectedTokenId);
+    if (!token) {
+      setLocalError(`Token "${selectedTokenId}" not found`);
+      return;
+    }
+
+    const odinAmount = OdinUtils.convertToOdinAmount(amount, token);
+    console.log(
+      `Depositing ${numAmount} ${token.ticker} (Odin amount: ${odinAmount}) for user ${connectedUser.principal}`,
+    );
+
+    // Not awaited: in redirect mode the page reloads and the result arrives
+    // through wallet state. The display amount travels in returnState.
+    void connectedUser.icrcApprove({
+      token: selectedTokenId,
+      amount: odinAmount,
+      spender: SPENDER_CANISTER_ID,
+      returnState: { flow: "deposit", displayAmount: numAmount },
+    });
   }
 
   return (

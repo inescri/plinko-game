@@ -14,7 +14,7 @@ import { useWallet } from "./contexts/WalletContext.tsx";
 
 export default function App() {
   const canvasRef = useRef<PlinkoCanvasRef>(null);
-  const { connectedUser } = useWallet();
+  const { connectedUser, request } = useWallet();
   const [showDepositModal, setShowDepositModal] = useState(false);
   const prevConnected = useRef(false);
 
@@ -22,15 +22,21 @@ export default function App() {
     canvasRef.current?.spawnBall();
   }, []);
 
-  // Auto-open deposit modal when wallet connects, close on disconnect
+  // Auto-open deposit modal when wallet connects, close on disconnect.
+  // A session restored right after a redirect-mode approve is not a fresh
+  // connect, so leave the modal closed then.
   useEffect(() => {
-    if (connectedUser && !prevConnected.current) {
+    if (
+      connectedUser &&
+      !prevConnected.current &&
+      request?.action !== "icrc_approve"
+    ) {
       setShowDepositModal(true);
     } else if (!connectedUser) {
       setShowDepositModal(false);
     }
     prevConnected.current = !!connectedUser;
-  }, [connectedUser]);
+  }, [connectedUser, request]);
 
   // Keyboard shortcut: Space to drop ball
   useEffect(() => {
