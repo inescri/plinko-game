@@ -1,0 +1,19 @@
+packages:
+  - "packages/*"
+
+# Azle's dfx build extension shells out to `npm exec`, which expects an
+# npm-style flat node_modules. pnpm's default isolated store hides Azle's
+# transitive deps, so use the hoisted layout for compatibility.
+nodeLinker: hoisted
+
+# azle's own install script only copies the dfx extension and fails where
+# dfx is absent (Netlify). packages/canister's postinstall does the same
+# copy, guarded on dfx being present, so azle's script is not needed.
+allowBuilds:
+  azle: false
+  esbuild: true
+
+# pnpm 11 refuses packages younger than its minimum release age. odin-connect
+# is Toniq's own SDK and is consumed the day it is released, so exempt it.
+minimumReleaseAgeExclude:
+  - odin-connect@2.0.2

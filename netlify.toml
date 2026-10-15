@@ -1,0 +1,11 @@
+# Netlify builds only the frontend workspace package. Base stays at the repo
+# root so pnpm sees pnpm-lock.yaml / pnpm-workspace.yaml and links
+# @plinko/shared. Set VITE_* variables in the Netlify UI (.env is ignored).
+[build]
+  command = "pnpm build:frontend"
+  publish = "packages/frontend/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Install only the frontend and its workspace deps; skips azle entirely.
+  PNPM_FLAGS = "--filter @plinko/frontend..."
