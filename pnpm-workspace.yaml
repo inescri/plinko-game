@@ -12,3 +12,8 @@ nodeLinker: hoisted
 allowBuilds:
   azle: false
   esbuild: true
+
+# pnpm 11 refuses packages younger than its minimum release age. odin-connect
+# is Toniq's own SDK and is consumed the day it is released, so exempt it.
+minimumReleaseAgeExclude:
+  - odin-connect@2.0.2
