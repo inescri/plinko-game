@@ -10,10 +10,15 @@ import type { PlinkoCanvasRef } from "../components/PlinkoCanvas.tsx";
  * carries its own result. The balance is debited optimistically and
  * replaced by the canister's answer when it arrives.
  */
-export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>) {
+export interface UsePlay {
+  play: () => void;
+  canPlay: boolean;
+}
+
+export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
   const game = useGameState();
   const dispatch = useGameDispatch();
-  const { actor } = useWallet();
+  const { actor, refreshInternal } = useWallet();
 
   // Latest values for the keyboard shortcut (no stale closure).
   const latest = useRef({ game, actor });
@@ -43,9 +48,13 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>) {
         const message =
           err instanceof Error && err.message ? err.message : "Bet failed";
         dispatch({ type: "BET_FAILED", payload: { bet, error: message } });
+        // The optimistic refund assumes the canister never saw the bet. A
+        // timeout or lost response can mean it did settle, so resync the
+        // real balance rather than trusting the local one.
+        void refreshInternal();
       }
     })();
-  }, [canvasRef, dispatch]);
+  }, [canvasRef, dispatch, refreshInternal]);
 
   const canPlay =
     game.token !== null &&
