@@ -46,14 +46,18 @@ export default function App() {
     }
   }, [connectedUser, internalLoaded, internalBalances, request]);
 
-  // Keyboard shortcut: Space to drop ball
+  // Keyboard shortcut: Space to drop ball. Skipped when a form control has
+  // focus: inputs/selects use Space themselves, and a focused button fires
+  // its own click on Space, which would be a second `play()` for one press.
+  // Auto-repeat from a held key is ignored so one press is one bet.
   useEffect(() => {
+    const ownsSpace = new Set(["INPUT", "SELECT", "TEXTAREA", "BUTTON"]);
     function onKeyDown(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement).tagName;
-      if (e.code === "Space" && tag !== "INPUT" && tag !== "SELECT") {
-        e.preventDefault();
-        play();
-      }
+      if (e.code !== "Space" || e.repeat) return;
+      const tag = e.target instanceof HTMLElement ? e.target.tagName : "";
+      if (ownsSpace.has(tag)) return;
+      e.preventDefault();
+      play();
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
