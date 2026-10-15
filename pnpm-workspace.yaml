@@ -6,6 +6,9 @@ packages:
 # transitive deps, so use the hoisted layout for compatibility.
 nodeLinker: hoisted
 
+# azle's own install script only copies the dfx extension and fails where
+# dfx is absent (Netlify). packages/canister's postinstall does the same
+# copy, guarded on dfx being present, so azle's script is not needed.
 allowBuilds:
-  azle: true
+  azle: false
   esbuild: true
