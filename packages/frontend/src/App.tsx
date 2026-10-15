@@ -11,6 +11,7 @@ import DropButton from "./components/DropButton.tsx";
 import LastWin from "./components/LastWin.tsx";
 import DepositModal from "./components/DepositModal.tsx";
 import WithdrawModal from "./components/WithdrawModal.tsx";
+import FundHouseModal from "./components/FundHouseModal.tsx";
 import { useWallet } from "./contexts/WalletContext.tsx";
 import { usePlay } from "./hooks/usePlay.ts";
 import { GAME_TOKEN_ID } from "./canister/config.ts";
@@ -22,6 +23,7 @@ export default function App() {
   const { play, canPlay } = usePlay(canvasRef);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showFundHouseModal, setShowFundHouseModal] = useState(false);
   const promptedRef = useRef(false);
 
   // Offer a deposit once per session when the player holds none of the game
@@ -32,6 +34,7 @@ export default function App() {
       promptedRef.current = false;
       setShowDepositModal(false);
       setShowWithdrawModal(false);
+      setShowFundHouseModal(false);
       return;
     }
     if (promptedRef.current || !internalLoaded) return;
@@ -63,6 +66,7 @@ export default function App() {
         <WalletSection
           onDeposit={() => setShowDepositModal(true)}
           onWithdraw={() => setShowWithdrawModal(true)}
+          onFundHouse={() => setShowFundHouseModal(true)}
         />
         {connectedUser && (
           <div className="balance-row">
@@ -85,6 +89,9 @@ export default function App() {
       )}
       {showWithdrawModal && (
         <WithdrawModal onClose={() => setShowWithdrawModal(false)} />
+      )}
+      {showFundHouseModal && (
+        <FundHouseModal onClose={() => setShowFundHouseModal(false)} />
       )}
     </div>
   );

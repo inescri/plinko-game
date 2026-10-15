@@ -11,6 +11,19 @@
  */
 export const GAME_TOKEN_ID = import.meta.env.VITE_GAME_TOKEN_ID ?? "btc";
 
+/**
+ * Odin principals shown the "Fund house" admin UI, comma-separated. This is
+ * a frontend-only gate: `fundHouse` is permissionless on the canister, and
+ * the canister owner (`getOwner`) is a dfx identity that cannot sign in to
+ * Odin. Also gates on the owner, should the owner ever be an Odin principal.
+ */
+export const HOUSE_ADMINS: readonly string[] = (
+  import.meta.env.VITE_HOUSE_ADMINS ?? ""
+)
+  .split(",")
+  .map((p) => p.trim())
+  .filter((p) => p !== "");
+
 /** The app canister's principal: ICRC-2 spender and actor target. */
 export const APP_CANISTER_ID = import.meta.env.VITE_APP_CANISTER_ID ?? "";
 

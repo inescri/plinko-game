@@ -3,11 +3,13 @@ import { useWallet } from "../contexts/WalletContext.tsx";
 interface WalletSectionProps {
   onDeposit?: () => void;
   onWithdraw?: () => void;
+  onFundHouse?: () => void;
 }
 
 export default function WalletSection({
   onDeposit,
   onWithdraw,
+  onFundHouse,
 }: WalletSectionProps) {
   const {
     connectedUser,
@@ -17,6 +19,7 @@ export default function WalletSection({
     connectWallet,
     disconnectWallet,
     internalBalances,
+    isHouseAdmin,
   } = useWallet();
 
   if (connectedUser) {
@@ -39,6 +42,11 @@ export default function WalletSection({
             >
               Withdraw
             </button>
+            {isHouseAdmin && (
+              <button className="btn btn-open-deposit" onClick={onFundHouse}>
+                Fund house
+              </button>
+            )}
             <button className="btn btn-disconnect" onClick={disconnectWallet}>
               Disconnect
             </button>

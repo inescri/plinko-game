@@ -14,7 +14,7 @@ import type {
 } from "odin-connect";
 import { odin } from "../odin/client.ts";
 import { approvalFor, claimRequest } from "../odin/approvalFlow.ts";
-import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
+import { APP_CANISTER_ID, GAME_TOKEN_ID, HOUSE_ADMINS } from "../canister/config.ts";
 import { useCanisterActor } from "../canister/useCanisterActor.ts";
 import type { CanisterActor } from "../canister/idl.ts";
 import { percentOf, type TokenInfo } from "../lib/amounts.ts";
@@ -29,6 +29,7 @@ export type FlowStage =
   | "idle"
   | "approving"
   | "crediting"
+  | "funding"
   | "withdrawing";
 
 interface WalletContextValue {
@@ -48,9 +49,14 @@ interface WalletContextValue {
   /** Deposit / withdraw progress, derived from the SDK request + canister call. */
   flowStage: FlowStage;
   flowError: string | null;
-  /** Incremented after each canister `deposit` / `withdraw` completes. */
+  /** Incremented after each canister `deposit` / `withdraw` / `fundHouse` completes. */
   depositsCompleted: number;
   withdrawalsCompleted: number;
+  fundingsCompleted: number;
+  /** Whether the connected principal may see the fund-house admin UI. */
+  isHouseAdmin: boolean;
+  /** House bankroll in the game token; null until loaded. */
+  houseBalance: bigint | null;
   connectWallet: () => void;
   disconnectWallet: () => void;
   getTokenInfo: (tokenId: string) => TokenInfo | null;
@@ -119,6 +125,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [flowError, setFlowError] = useState<string | null>(null);
   const [depositsCompleted, setDepositsCompleted] = useState(0);
   const [withdrawalsCompleted, setWithdrawalsCompleted] = useState(0);
+  const [fundingsCompleted, setFundingsCompleted] = useState(0);
+  const [isHouseAdmin, setIsHouseAdmin] = useState(false);
+  const [houseBalance, setHouseBalance] = useState<bigint | null>(null);
 
   // ── Wallet holdings (Odin API) ──────────────────────────────────────────
   useEffect(() => {
@@ -146,7 +155,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [connectedUser, depositsCompleted, withdrawalsCompleted]);
+  }, [connectedUser, depositsCompleted, withdrawalsCompleted, fundingsCompleted]);
 
   // ── Internal balances (app canister) ───────────────────────────────────
   const refreshInternal = useCallback(async () => {
@@ -168,6 +177,53 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshInternal();
   }, [refreshInternal]);
+
+  // ── Admin check (gates the fund-house UI; the endpoint itself is open) ──
+  // Listed in VITE_HOUSE_ADMINS, or the canister owner.
+  useEffect(() => {
+    if (!actor || !connectedUser) {
+      setIsHouseAdmin(false);
+      return;
+    }
+    if (HOUSE_ADMINS.includes(connectedUser.principal)) {
+      setIsHouseAdmin(true);
+      return;
+    }
+    let cancelled = false;
+    actor
+      .getOwner()
+      .then((owner) => {
+        if (cancelled) return;
+        setIsHouseAdmin(owner.length === 1 && owner[0].toText() === connectedUser.principal);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch owner:", err);
+        if (!cancelled) setIsHouseAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [actor, connectedUser]);
+
+  // ── House bankroll for the game token ──────────────────────────────────
+  // Refetched after funding and whenever a bet settles (inFlight drops).
+  useEffect(() => {
+    if (!actor) {
+      setHouseBalance(null);
+      return;
+    }
+    if (game.inFlight > 0) return;
+    let cancelled = false;
+    actor
+      .getHouseBalance(GAME_TOKEN_ID)
+      .then((amount) => {
+        if (!cancelled) setHouseBalance(amount);
+      })
+      .catch((err) => console.error("Failed to fetch house balance:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [actor, fundingsCompleted, game.inFlight]);
 
   // Resolve metadata for the game token (needed before any deposit) and for
   // internally held tokens the wallet no longer lists.
@@ -305,6 +361,58 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     })();
   }, [request, connectedUser, actor, refreshInternal]);
 
+  // ── Fund-house follow-up: approval settled → canister.fundHouse ─────────
+  useEffect(() => {
+    const current = approvalFor(request, "fundHouse");
+    if (current === null) return;
+    const { id, status, input } = current.request;
+    if (status === "pending") {
+      setFlowStage("approving");
+      return;
+    }
+    if (status === "rejected") {
+      if (claimRequest(id)) {
+        setFlowStage("idle");
+        setFlowError(
+          current.request.error === "popup_closed"
+            ? "Approval window was closed"
+            : "Approval was rejected",
+        );
+      }
+      return;
+    }
+    if (status === "failed") {
+      if (claimRequest(id)) {
+        setFlowStage("idle");
+        setFlowError(current.request.error ?? "Approval failed");
+      }
+      return;
+    }
+    if (status !== "success") return;
+    if (connectedUser !== null && connectedUser.getIdentity() === null) {
+      if (claimRequest(id)) {
+        setFlowStage("idle");
+        setFlowError("Session has no delegation — reconnect and try again");
+      }
+      return;
+    }
+    if (actor === null) return; // re-runs once the actor exists (redirect reload)
+    if (!claimRequest(id)) return; // claim BEFORE the await
+    void (async () => {
+      setFlowError(null);
+      setFlowStage("funding");
+      try {
+        await actor.fundHouse(input.token, input.amount);
+      } catch (err) {
+        setFlowStage("idle");
+        setFlowError(errorMessage(err, "Funding the house failed"));
+        return;
+      }
+      setFlowStage("idle");
+      setFundingsCompleted((n) => n + 1);
+    })();
+  }, [request, connectedUser, actor]);
+
   // ── Withdraw follow-up: fee approval settled → canister.withdraw ────────
   useEffect(() => {
     const current = approvalFor(request, "withdraw");
@@ -402,6 +510,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     flowError,
     depositsCompleted,
     withdrawalsCompleted,
+    fundingsCompleted,
+    isHouseAdmin,
+    houseBalance,
     connectWallet,
     disconnectWallet,
     getTokenInfo,

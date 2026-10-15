@@ -70,7 +70,10 @@ OdinConnect` elsewhere. `contexts/WalletContext.tsx` subscribes with
 `useSyncExternalStore`, builds the canister actor from the delegation
 identity, and runs the deposit / withdraw follow-ups: an `icrc_approve`
 request tagged with `returnState.flow` settles → `claimRequest(id)` →
-`actor.deposit` / `actor.withdraw` (`src/odin/approvalFlow.ts`). Start
+`actor.deposit` / `actor.fundHouse` / `actor.withdraw`
+(`src/odin/approvalFlow.ts`). The fund-house UI is shown to principals in
+`VITE_HOUSE_ADMINS` and to the canister owner (`getOwner`); the endpoint
+itself is open. Start
 `connect()` and `user.icrcApprove()` from handlers with `void`. Never call
 `connect()` automatically on a `rejected` / `unverified` request. Keep the
 default `mode: "auto"` so wallet in-app browsers work. See the SDK's

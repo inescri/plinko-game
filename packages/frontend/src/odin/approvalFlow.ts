@@ -1,14 +1,15 @@
 import type { OdinRequestState } from "odin-connect";
 
 /**
- * `returnState` the deposit and withdraw flows attach to their ICRC-2
- * approval. Both start an `icrc_approve` request, so `input` alone cannot
- * tell them apart; `flow` is the discriminator. Withdraw also carries the
+ * `returnState` the deposit, fund-house and withdraw flows attach to their
+ * ICRC-2 approval. All three start an `icrc_approve` request, so `input`
+ * alone cannot tell them apart; `flow` is the discriminator. Withdraw also carries the
  * token + amount to withdraw (its approval is for the BTC fee, so those are
  * not in `request.input`, and in redirect mode the form's state is gone).
  */
 export type ApprovalReturnState =
   | { flow: "deposit" }
+  | { flow: "fundHouse" }
   | { flow: "withdraw"; token: string; amount: bigint };
 
 export type IcrcApproveRequest = Extract<
@@ -25,6 +26,7 @@ export function parseApprovalReturnState(
 ): ApprovalReturnState | null {
   if (!isRecord(value)) return null;
   if (value.flow === "deposit") return { flow: "deposit" };
+  if (value.flow === "fundHouse") return { flow: "fundHouse" };
   if (
     value.flow === "withdraw" &&
     typeof value.token === "string" &&

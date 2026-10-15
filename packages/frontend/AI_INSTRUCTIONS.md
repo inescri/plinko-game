@@ -19,14 +19,14 @@ src/
   sounds.js
   odin/client.ts           # the single OdinConnect instance (env-configured)
   odin/approvalFlow.ts     # returnState tags + claimRequest for approvals
-  canister/config.ts       # APP_CANISTER_ID / network from Vite env
+  canister/config.ts       # APP_CANISTER_ID / GAME_TOKEN_ID / HOUSE_ADMINS / network from Vite env
   canister/idl.ts          # hand-maintained Candid interface (must match the canister)
   canister/actor.ts, useCanisterActor.ts  # typed actor from the delegation identity
-  contexts/WalletContext.tsx  # odin-connect state, actor, deposit/withdraw follow-ups
+  contexts/WalletContext.tsx  # odin-connect state, actor, deposit/fundHouse/withdraw follow-ups, admin check
   contexts/GameContext.tsx    # game state: token, bigint balance/bet, rows, risk
   hooks/usePlay.ts         # actor.play → canvas.spawnBall
   lib/amounts.ts, fees.ts  # bigint ↔ display conversion, withdraw fee constants
-  components/              # UI
+  components/              # UI (FundHouseModal: admin-only, funds the bankroll)
 index.html                 # Vite html entry
 vite.config.ts             # outDir: dist → served by the dfx asset canister
 ```
@@ -57,7 +57,7 @@ vite.config.ts             # outDir: dist → served by the dfx asset canister
    through `useWallet()`. Start `connect()` / `user.icrcApprove()` with `void`
    from handlers; react to `request.action` + `request.status` in effects,
    reading arguments from `request.input` / `request.returnState`. The
-   canister `deposit` / `withdraw` follow-ups run once per `request.id`
+   canister `deposit` / `fundHouse` / `withdraw` follow-ups run once per `request.id`
    (`claimRequest` in `odin/approvalFlow.ts`, claimed before the await).
    Never auto-retry a `rejected` / `unverified` connect. Keep `mode: "auto"`.
 6. **`canister/idl.ts` mirrors the canister.** When an endpoint changes in
