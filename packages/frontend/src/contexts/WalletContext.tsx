@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -121,6 +122,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [internalBalances, setInternalBalances] = useState<readonly InternalBalance[]>([]);
   const [internalLoaded, setInternalLoaded] = useState(false);
   const [tokenInfos, setTokenInfos] = useState<Record<string, TokenInfo>>({});
+  // Token ids whose metadata fetch failed; skipped until the session changes
+  // so a bad id or a down API does not refetch on every render.
+  const failedTokenIds = useRef(new Set<string>());
   const [flowStage, setFlowStage] = useState<FlowStage>("idle");
   const [flowError, setFlowError] = useState<string | null>(null);
   const [depositsCompleted, setDepositsCompleted] = useState(0);
@@ -228,10 +232,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // Resolve metadata for the game token (needed before any deposit) and for
   // internally held tokens the wallet no longer lists.
   useEffect(() => {
+    failedTokenIds.current.clear();
+  }, [connectedUser]);
+  useEffect(() => {
     if (!connectedUser) return;
+    const failed = failedTokenIds.current;
     const missing = [GAME_TOKEN_ID, ...internalBalances.map((b) => b.token)]
       .filter((id, i, all) => all.indexOf(id) === i)
-      .filter((id) => tokenInfos[id] === undefined);
+      .filter((id) => tokenInfos[id] === undefined && !failed.has(id));
     if (missing.length === 0) return;
     let cancelled = false;
     Promise.all(
@@ -239,13 +247,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         odin.api
           .getToken(id)
           .then((t) => [id, toTokenInfo(t)] as const)
-          .catch(() => null),
+          .catch((err: unknown) => {
+            console.error(`Failed to fetch token ${id}:`, err);
+            return null;
+          }),
       ),
     ).then((results) => {
       if (cancelled) return;
+      const resolved = results.filter((r) => r !== null);
+      for (const id of missing) if (!resolved.some((r) => r[0] === id)) failed.add(id);
+      if (resolved.length === 0) return;
       setTokenInfos((prev) => {
         const next = { ...prev };
-        for (const r of results) if (r) next[r[0]] = r[1];
+        for (const r of resolved) next[r[0]] = r[1];
         return next;
       });
     });
