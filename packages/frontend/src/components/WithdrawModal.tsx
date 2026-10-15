@@ -9,10 +9,10 @@ import {
   placesOf,
 } from "../lib/amounts.ts";
 import {
-  BTC_TOKEN_ID,
   WITHDRAW_FEE_APPROVAL,
   WITHDRAW_FEE_SATS,
 } from "../lib/fees.ts";
+import { ODIN_BTC_TOKEN_ID } from "@plinko/shared";
 
 interface WithdrawModalProps {
   onClose: () => void;
@@ -70,7 +70,7 @@ export default function WithdrawModal({ onClose }: WithdrawModalProps) {
       amount: raw,
     };
     void connectedUser.icrcApprove({
-      token: BTC_TOKEN_ID,
+      token: ODIN_BTC_TOKEN_ID,
       amount: WITHDRAW_FEE_APPROVAL,
       spender: APP_CANISTER_ID,
       returnState,

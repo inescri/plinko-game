@@ -19,24 +19,12 @@ export const ODIN_LEDGER_CANISTER_ID = Principal.fromText(
     'yspgd-ciaaa-aaaaj-a6rrq-cai',
 );
 
-/** Odin's BTC token id — the asset the flat ledger fee is denominated in. */
-export const ODIN_BTC_TOKEN_ID = 'btc';
-
 /**
- * Flat BTC fee the Odin ledger charges the SENDER on every transfer, in
- * millisatoshis (1 sat = 1000 millisat → 100 sats). `withdraw` pulls this much
- * BTC from the withdrawer (icrc2_transfer_from) to fund the outbound transfer's
- * own fee, so withdrawals need no maintainer-seeded BTC float.
- *
- * NOTE: pulling BTC is itself a transfer, so the ledger charges the withdrawer a
- * second fee on the pull (debited from the caller's BTC, per ICRC-2). The caller
- * therefore approves >= 2x this value and pays 2x total; the canister nets zero.
- *
- * ⚠️ Verify this constant against the live Odin ledger before mainnet. If it is
- * lower than the real fee, the first withdraw on an empty-float canister traps
- * with error 910; if higher, the canister slowly accumulates a BTC surplus.
+ * The flat BTC ledger fee and the token it is paid in live in `@plinko/shared`
+ * so the frontend approves exactly what this canister pulls. Re-exported here
+ * so the fee stays importable from the ledger client.
  */
-export const ODIN_BTC_FEE = 100_000n;
+export { ODIN_BTC_FEE, ODIN_BTC_TOKEN_ID } from '@plinko/shared';
 
 const Account = IDL.Record({
     owner: IDL.Principal,
