@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { OdinUtils } from "odin-connect";
-import { APP_CANISTER_ID } from "../canister/config.ts";
+import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
 import type { ApprovalReturnState } from "../odin/approvalFlow.ts";
 
 interface DepositModalProps {
   onClose: () => void;
 }
 
+/**
+ * Deposit the game token (`GAME_TOKEN_ID`) into the app canister. Only that
+ * one token is offered: the house is funded in it and the game plays in it.
+ */
 export default function DepositModal({ onClose }: DepositModalProps) {
   const {
-    tokenBalances,
+    getTokenInfo,
     getWalletBalance,
     connectedUser,
     actor,
@@ -19,7 +23,6 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     depositsCompleted,
   } = useWallet();
 
-  const [selectedTokenId, setSelectedTokenId] = useState("");
   const [amount, setAmount] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const openedWith = useRef(depositsCompleted);
@@ -29,15 +32,16 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     if (depositsCompleted > openedWith.current) onClose();
   }, [depositsCompleted, onClose]);
 
+  const token = getTokenInfo(GAME_TOKEN_ID);
+  const ticker = token?.ticker ?? GAME_TOKEN_ID.toUpperCase();
   const busy = flowStage !== "idle";
   const error = localError ?? flowError;
-  const walletBalance = selectedTokenId ? getWalletBalance(selectedTokenId) : 0;
+  const walletBalance = getWalletBalance(GAME_TOKEN_ID);
   const numAmount = Number(amount);
-  const invalid =
-    !selectedTokenId || numAmount <= 0 || numAmount > walletBalance;
+  const invalid = !token || numAmount <= 0 || numAmount > walletBalance;
 
   function handleDeposit() {
-    if (invalid || busy) return;
+    if (invalid || busy || !token) return;
     setLocalError(null);
 
     if (!connectedUser) {
@@ -52,11 +56,6 @@ export default function DepositModal({ onClose }: DepositModalProps) {
       setLocalError("Canister session not ready — reconnect and try again");
       return;
     }
-    const token = tokenBalances.find((t) => t.id === selectedTokenId);
-    if (!token) {
-      setLocalError(`Token "${selectedTokenId}" not found`);
-      return;
-    }
 
     const odinAmount = OdinUtils.convertToOdinAmount(amount, token);
     if (odinAmount <= 0n) {
@@ -69,7 +68,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     // the canister's `deposit`, which pulls the approved funds.
     const returnState: ApprovalReturnState = { flow: "deposit" };
     void connectedUser.icrcApprove({
-      token: selectedTokenId,
+      token: GAME_TOKEN_ID,
       amount: odinAmount,
       spender: APP_CANISTER_ID,
       returnState,
@@ -81,40 +80,18 @@ export default function DepositModal({ onClose }: DepositModalProps) {
       ? "Approving…"
       : flowStage === "crediting"
         ? "Crediting…"
-        : "Deposit";
+        : `Deposit ${ticker}`;
 
   return (
     <div className="modal-overlay" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-title">Deposit</h2>
+        <h2 className="modal-title">Deposit {ticker}</h2>
 
-        <div className="control-group">
-          <label>Token</label>
-          <select
-            id="token-select"
-            value={selectedTokenId}
-            disabled={busy}
-            onChange={(e) => {
-              setSelectedTokenId(e.target.value);
-              setAmount("");
-            }}
-          >
-            <option value="" disabled>
-              Select a token
-            </option>
-            {tokenBalances.map((token) => (
-              <option key={token.id} value={token.id}>
-                {token.ticker} ({token.id})
-              </option>
-            ))}
-          </select>
+        <div className="modal-balance-info">
+          {token
+            ? `Wallet Balance: ${walletBalance.toFixed(2)} ${ticker}`
+            : `Loading ${ticker}…`}
         </div>
-
-        {selectedTokenId && (
-          <div className="modal-balance-info">
-            Wallet Balance: {walletBalance.toFixed(2)}
-          </div>
-        )}
 
         <div className="control-group">
           <label>Amount</label>
@@ -126,7 +103,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             step="any"
             placeholder="0.00"
             value={amount}
-            disabled={busy}
+            disabled={busy || !token}
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>
@@ -136,7 +113,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             <button
               key={pct}
               className="btn"
-              disabled={!selectedTokenId || busy}
+              disabled={!token || busy}
               onClick={() => setAmount(String((walletBalance * pct) / 100))}
             >
               {pct}%
@@ -144,6 +121,11 @@ export default function DepositModal({ onClose }: DepositModalProps) {
           ))}
         </div>
 
+        {token && walletBalance === 0 && (
+          <div className="deposit-error">
+            No {ticker} in your Odin wallet to deposit.
+          </div>
+        )}
         {error && <div className="deposit-error">{error}</div>}
 
         <button

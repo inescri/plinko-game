@@ -6,8 +6,10 @@ Rules for working inside the frontend package. Read alongside the root
 ## What this package is
 
 A Vite + React + TypeScript Plinko game: log in with Odin Connect (delegation
-scoped to the app canister), deposit a token through an ICRC-2 approval, bet
-from the internal balance, withdraw.
+scoped to the app canister), deposit the game token (`VITE_GAME_TOKEN_ID`,
+`src/canister/config.ts`) through an ICRC-2 approval, bet from the internal
+balance, withdraw. The canister is token-agnostic; the single-token rule is a
+frontend policy. Withdrawals still list every internal balance.
 
 ```
 src/

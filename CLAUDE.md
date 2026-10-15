@@ -58,8 +58,9 @@ them, stop and surface it to a human.
 4. The canister, not the client, resolves bets. The frontend only replays the
    returned path. Amounts are `bigint` base units end-to-end; display strings
    only at the render edge (`packages/frontend/src/lib/amounts.ts`).
-5. Canister ids and Odin env come from Vite env (`.env`, see `.env.example`),
-   never string literals in `src/`.
+5. Canister ids, Odin env and the game token come from Vite env (`.env`, see
+   `.env.example`), never string literals in `src/`. The frontend deposits
+   and bets in `VITE_GAME_TOKEN_ID` only; the canister stays token-agnostic.
 
 ## odin-connect 2.x
 

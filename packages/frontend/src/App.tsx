@@ -13,6 +13,7 @@ import DepositModal from "./components/DepositModal.tsx";
 import WithdrawModal from "./components/WithdrawModal.tsx";
 import { useWallet } from "./contexts/WalletContext.tsx";
 import { usePlay } from "./hooks/usePlay.ts";
+import { GAME_TOKEN_ID } from "./canister/config.ts";
 
 export default function App() {
   const canvasRef = useRef<PlinkoCanvasRef>(null);
@@ -23,8 +24,8 @@ export default function App() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const promptedRef = useRef(false);
 
-  // Offer a deposit once per session when the player has nothing to play
-  // with. Not after a redirect-return from an approval: that flow is already
+  // Offer a deposit once per session when the player holds none of the game
+  // token. Not after a redirect-return from an approval: that flow is already
   // crediting.
   useEffect(() => {
     if (!connectedUser) {
@@ -36,7 +37,8 @@ export default function App() {
     if (promptedRef.current || !internalLoaded) return;
     if (request?.action === "icrc_approve") return;
     promptedRef.current = true;
-    if (!internalBalances.some((b) => b.amount > 0n)) {
+    const held = internalBalances.find((b) => b.token === GAME_TOKEN_ID);
+    if (!held || held.amount === 0n) {
       setShowDepositModal(true);
     }
   }, [connectedUser, internalLoaded, internalBalances, request]);

@@ -3,7 +3,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -15,7 +14,7 @@ import type {
 } from "odin-connect";
 import { odin } from "../odin/client.ts";
 import { approvalFor, claimRequest } from "../odin/approvalFlow.ts";
-import { APP_CANISTER_ID } from "../canister/config.ts";
+import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
 import { useCanisterActor } from "../canister/useCanisterActor.ts";
 import type { CanisterActor } from "../canister/idl.ts";
 import { percentOf, type TokenInfo } from "../lib/amounts.ts";
@@ -54,8 +53,6 @@ interface WalletContextValue {
   withdrawalsCompleted: number;
   connectWallet: () => void;
   disconnectWallet: () => void;
-  /** Make `tokenId` the token the game plays with. */
-  selectGameToken: (tokenId: string) => void;
   getTokenInfo: (tokenId: string) => TokenInfo | null;
   getWalletBalance: (tokenId: string) => number;
 }
@@ -122,8 +119,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [flowError, setFlowError] = useState<string | null>(null);
   const [depositsCompleted, setDepositsCompleted] = useState(0);
   const [withdrawalsCompleted, setWithdrawalsCompleted] = useState(0);
-  /** Token to select once its internal balance shows up (after a deposit). */
-  const pendingSelect = useRef<string | null>(null);
 
   // ── Wallet holdings (Odin API) ──────────────────────────────────────────
   useEffect(() => {
@@ -174,10 +169,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     void refreshInternal();
   }, [refreshInternal]);
 
-  // Resolve metadata for internally held tokens the wallet no longer lists.
+  // Resolve metadata for the game token (needed before any deposit) and for
+  // internally held tokens the wallet no longer lists.
   useEffect(() => {
-    const missing = internalBalances
-      .map((b) => b.token)
+    if (!connectedUser) return;
+    const missing = [GAME_TOKEN_ID, ...internalBalances.map((b) => b.token)]
+      .filter((id, i, all) => all.indexOf(id) === i)
       .filter((id) => tokenInfos[id] === undefined);
     if (missing.length === 0) return;
     let cancelled = false;
@@ -199,7 +196,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [internalBalances, tokenInfos]);
+  }, [connectedUser, internalBalances, tokenInfos]);
 
   const getTokenInfo = useCallback(
     (tokenId: string): TokenInfo | null => tokenInfos[tokenId] ?? null,
@@ -207,33 +204,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 
   // ── Game token sync ────────────────────────────────────────────────────
-  const selectGameToken = useCallback(
-    (tokenId: string) => {
-      const info = tokenInfos[tokenId];
-      if (!info) {
-        pendingSelect.current = tokenId;
-        return;
-      }
-      dispatch({ type: "SET_TOKEN", payload: info });
-    },
-    [dispatch, tokenInfos],
-  );
-
-  // Pick a game token automatically: a pending deposit's token, else the
-  // first internal balance when none is selected yet.
+  // The game always plays in GAME_TOKEN_ID; select it once its metadata is
+  // known (and the session exists — the sign-out effect below clears it).
   useEffect(() => {
-    const wanted = pendingSelect.current;
-    if (wanted && tokenInfos[wanted]) {
-      pendingSelect.current = null;
-      dispatch({ type: "SET_TOKEN", payload: tokenInfos[wanted] });
-      return;
-    }
-    if (game.token === null && internalBalances.length > 0) {
-      const first = internalBalances.find((b) => b.amount > 0n) ?? internalBalances[0];
-      const info = tokenInfos[first.token];
-      if (info) dispatch({ type: "SET_TOKEN", payload: info });
-    }
-  }, [internalBalances, tokenInfos, game.token, dispatch]);
+    if (!connectedUser || game.token?.id === GAME_TOKEN_ID) return;
+    const info = tokenInfos[GAME_TOKEN_ID];
+    if (info) dispatch({ type: "SET_TOKEN", payload: info });
+  }, [connectedUser, tokenInfos, game.token, dispatch]);
 
   // Mirror the canister balance for the game token while no bet is pending.
   const gameTokenId = game.token?.id ?? null;
@@ -322,7 +299,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setFlowError(errorMessage(err, "Deposit failed"));
         return;
       }
-      pendingSelect.current = input.token;
       setFlowStage("idle");
       setDepositsCompleted((n) => n + 1);
       await refreshInternal();
@@ -428,7 +404,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     withdrawalsCompleted,
     connectWallet,
     disconnectWallet,
-    selectGameToken,
     getTokenInfo,
     getWalletBalance,
   };

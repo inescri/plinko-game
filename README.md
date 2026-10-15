@@ -120,6 +120,7 @@ be exercised; the full flow needs `--network ic`.
 | `VITE_ODIN_APP_NAME`   | Name shown on the Odin approval page                 |
 | `VITE_ODIN_ENV`        | `prod` (the canister uses the prod Odin ledger)      |
 | `VITE_APP_CANISTER_ID` | App canister id (spender + actor target)             |
+| `VITE_GAME_TOKEN_ID`   | The one Odin token players deposit and bet with (`btc`) |
 | `VITE_DFX_NETWORK`     | `local` (fetches the root key) or `ic`               |
 | `VITE_IC_HOST`         | Optional replica/boundary host override              |
 
@@ -186,6 +187,8 @@ second canister:
    `VITE_DFX_NETWORK=ic`), add the frontend origin to `TRUSTED_ORIGINS`,
    redeploy the canister. Verify:
    `dfx canister call canister icrc28_trusted_origins '()' --network ic`.
-4. Fund the house: approve the canister as spender for the token on Odin,
+4. Fund the house in `VITE_GAME_TOKEN_ID` (the only token the frontend
+   deposits and bets with; the canister itself is token-agnostic): approve
+   the canister as spender for the token on Odin,
    then `dfx canister call canister fundHouse '("<token>", <amount>)' --network ic`
    (or call it from any delegated session). `getMaxBet` is `0` until then.

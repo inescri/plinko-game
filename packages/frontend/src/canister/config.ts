@@ -3,6 +3,14 @@
  * (see `.env.example`); dfx writes canister ids to the root `.env` on deploy.
  */
 
+/**
+ * The one Odin token the game accepts for deposits and bets. The canister is
+ * token-agnostic (balances are keyed per token), so this is a frontend
+ * policy: deposits are restricted to it and the game always plays in it.
+ * Withdrawals still list every internal balance so nothing gets stranded.
+ */
+export const GAME_TOKEN_ID = import.meta.env.VITE_GAME_TOKEN_ID ?? "btc";
+
 /** The app canister's principal: ICRC-2 spender and actor target. */
 export const APP_CANISTER_ID = import.meta.env.VITE_APP_CANISTER_ID ?? "";
 
