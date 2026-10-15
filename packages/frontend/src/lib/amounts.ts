@@ -9,7 +9,7 @@ export interface TokenInfo {
 }
 
 /** Number of decimal places between base units and display units. */
-export function placesOf(token: Pick<TokenInfo, "decimals" | "divisibility">) {
+export function placesOf(token: Pick<TokenInfo, "decimals" | "divisibility">): number {
   return token.decimals + token.divisibility;
 }
 
