@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { OdinUtils } from "odin-connect";
+import { APP_CANISTER_ID } from "../canister/config.ts";
 
 interface DepositModalProps {
   onClose: () => void;
 }
-
-// Replace with actual canister ID
-const SPENDER_CANISTER_ID = "sfgyi-iyaaa-aaaam-qepyq-cai";
 
 export default function DepositModal({ onClose }: DepositModalProps) {
   const { tokenBalances, getTokenBalance, connectedUser, request } =
@@ -64,6 +62,10 @@ export default function DepositModal({ onClose }: DepositModalProps) {
       setLocalError("Wallet not connected");
       return;
     }
+    if (!APP_CANISTER_ID) {
+      setLocalError("App canister id not configured");
+      return;
+    }
     const token = tokenBalances.find((t) => t.id === selectedTokenId);
     if (!token) {
       setLocalError(`Token "${selectedTokenId}" not found`);
@@ -80,7 +82,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     void connectedUser.icrcApprove({
       token: selectedTokenId,
       amount: odinAmount,
-      spender: SPENDER_CANISTER_ID,
+      spender: APP_CANISTER_ID,
       returnState: { flow: "deposit", displayAmount: numAmount },
     });
   }

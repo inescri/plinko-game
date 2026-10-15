@@ -7,12 +7,12 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import {
-  OdinConnect,
-  type OdinConnectedUser,
-  type OdinBalance,
-  type OdinRequestState,
+import type {
+  OdinConnectedUser,
+  OdinBalance,
+  OdinRequestState,
 } from "odin-connect";
+import { odin } from "../odin/client.ts";
 import { useGameDispatch } from "./GameContext.tsx";
 
 interface WalletContextValue {
@@ -49,10 +49,6 @@ export function isDepositReturnState(
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
-
-// One instance per page load. Results (connect, approve) arrive through its
-// state store, which also works after a redirect-mode page reload.
-const odinConnect = new OdinConnect({ name: "Plinko", env: "dev" });
 
 // Request ids whose deposit has been credited. Module scope so React
 // StrictMode / remounts never credit the same approval twice.
@@ -92,9 +88,9 @@ function deriveConnectionError(
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { user: connectedUser, request, status } = useSyncExternalStore(
-    odinConnect.subscribe,
-    odinConnect.getState,
-    odinConnect.getServerState,
+    odin.subscribe,
+    odin.getState,
+    odin.getServerState,
   );
   const [tokenBalances, setTokenBalances] = useState<readonly OdinBalance[]>(
     [],
@@ -142,14 +138,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [request, dispatch]);
 
   const connectWallet = useCallback(() => {
-    void odinConnect.connect({
+    void odin.connect({
       requires_api: false,
       requires_delegation: false,
     });
   }, []);
 
   const disconnectWallet = useCallback(() => {
-    odinConnect.disconnect();
+    odin.disconnect();
     dispatch({ type: "SET_BALANCE", payload: 0 });
   }, [dispatch]);
 

@@ -1,36 +1,25 @@
 {
   "name": "plinko",
   "version": "1.0.0",
-  "description": "",
-  "main": "game.js",
+  "private": true,
+  "description": "Plinko game on Odin Fun",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "build": "pnpm build:frontend",
+    "build:frontend": "pnpm --filter @plinko/frontend build",
+    "dev:frontend": "pnpm --filter @plinko/frontend dev",
+    "typecheck": "pnpm -r typecheck"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/inescri/plinko-game.git"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/inescri/plinko-game/issues"
   },
-  "homepage": "https://github.com/inescri/plinko-game#readme",
-  "dependencies": {
-    "@vitejs/plugin-react": "^6.0.1",
-    "odin-connect": "^2.0.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  },
-  "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.3"
-  }
+  "homepage": "https://github.com/inescri/plinko-game#readme"
 }
