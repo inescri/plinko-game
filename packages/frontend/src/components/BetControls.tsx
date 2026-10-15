@@ -1,24 +1,44 @@
+import { useEffect, useState } from "react";
 import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
+import {
+  formatTokenAmount,
+  minBigInt,
+  parseTokenAmount,
+  percentOf,
+  placesOf,
+} from "../lib/amounts.ts";
 
 export default function BetControls() {
-  const { bet, balance } = useGameState();
+  const { bet, balance, maxBet, token } = useGameState();
   const dispatch = useGameDispatch();
+  const places = token ? placesOf(token) : 0;
+  const cap = minBigInt(balance, maxBet);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value) || 1;
-    dispatch({ type: "SET_BET", payload: Math.max(1, Math.min(balance, val)) });
+  // Local text so the user can type freely; committed as bigint on change.
+  const [text, setText] = useState(() => formatTokenAmount(bet, places));
+  useEffect(() => {
+    setText(formatTokenAmount(bet, places));
+  }, [bet, places]);
+
+  const commit = (raw: bigint) => {
+    const clamped = raw < 0n ? 0n : minBigInt(raw, cap);
+    dispatch({ type: "SET_BET", payload: clamped });
   };
 
   return (
     <div className="control-group">
-      <label>Bet Amount</label>
+      <label>Bet Amount{token ? ` (${token.ticker})` : ""}</label>
       <div className="bet-controls">
         <input
-          type="number"
-          value={bet}
-          min="1"
-          step="1"
-          onChange={handleChange}
+          type="text"
+          inputMode="decimal"
+          value={text}
+          disabled={!token}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={() => token && commit(parseTokenAmount(text, token))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && token) commit(parseTokenAmount(text, token));
+          }}
         />
       </div>
       <div className="bet-percent-buttons">
@@ -26,17 +46,18 @@ export default function BetControls() {
           <button
             key={pct}
             className="btn btn-sm"
-            onClick={() =>
-              dispatch({
-                type: "SET_BET",
-                payload: Math.max(1, Math.floor((balance * pct) / 100)),
-              })
-            }
+            disabled={!token}
+            onClick={() => commit(percentOf(cap, pct))}
           >
             {pct}%
           </button>
         ))}
       </div>
+      {token && maxBet < balance && (
+        <div className="modal-balance-info">
+          Max bet (house limit): {formatTokenAmount(maxBet, places)}
+        </div>
+      )}
     </div>
   );
 }

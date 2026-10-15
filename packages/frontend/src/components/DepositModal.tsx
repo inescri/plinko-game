@@ -2,60 +2,42 @@ import { useEffect, useRef, useState } from "react";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { OdinUtils } from "odin-connect";
 import { APP_CANISTER_ID } from "../canister/config.ts";
+import type { ApprovalReturnState } from "../odin/approvalFlow.ts";
 
 interface DepositModalProps {
   onClose: () => void;
 }
 
 export default function DepositModal({ onClose }: DepositModalProps) {
-  const { tokenBalances, getTokenBalance, connectedUser, request } =
-    useWallet();
+  const {
+    tokenBalances,
+    getWalletBalance,
+    connectedUser,
+    actor,
+    flowStage,
+    flowError,
+    depositsCompleted,
+  } = useWallet();
 
   const [selectedTokenId, setSelectedTokenId] = useState("");
   const [amount, setAmount] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-  // Approve requests already settled when this modal opened must not close
-  // it or show as errors; only requests started from here count.
-  const startedRequestIds = useRef(new Set<string>());
-  const openedWithRequestId = useRef(request?.id ?? null);
+  const openedWith = useRef(depositsCompleted);
 
-  const approveRequest =
-    request?.action === "icrc_approve" &&
-    request.id !== openedWithRequestId.current
-      ? request
-      : null;
-  const isDepositing = approveRequest?.status === "pending";
-
-  let error = localError;
-  if (approveRequest?.status === "rejected") {
-    error =
-      approveRequest.error === "popup_closed"
-        ? "Approval window was closed"
-        : "Approval was rejected";
-  } else if (approveRequest?.status === "failed") {
-    error = approveRequest.error ?? "Deposit failed";
-  }
-
-  // Balance was credited in WalletContext; just close once per success.
+  // Close once the canister has credited a deposit started from here.
   useEffect(() => {
-    if (approveRequest?.status !== "success") return;
-    if (startedRequestIds.current.has(approveRequest.id)) return;
-    startedRequestIds.current.add(approveRequest.id);
-    onClose();
-  }, [approveRequest, onClose]);
+    if (depositsCompleted > openedWith.current) onClose();
+  }, [depositsCompleted, onClose]);
 
-  const walletBalance = selectedTokenId ? getTokenBalance(selectedTokenId) : 0;
+  const busy = flowStage !== "idle";
+  const error = localError ?? flowError;
+  const walletBalance = selectedTokenId ? getWalletBalance(selectedTokenId) : 0;
+  const numAmount = Number(amount);
+  const invalid =
+    !selectedTokenId || numAmount <= 0 || numAmount > walletBalance;
 
   function handleDeposit() {
-    const numAmount = Number(amount);
-    if (
-      !selectedTokenId ||
-      numAmount <= 0 ||
-      numAmount > walletBalance ||
-      isDepositing
-    )
-      return;
-
+    if (invalid || busy) return;
     setLocalError(null);
 
     if (!connectedUser) {
@@ -66,6 +48,10 @@ export default function DepositModal({ onClose }: DepositModalProps) {
       setLocalError("App canister id not configured");
       return;
     }
+    if (!actor) {
+      setLocalError("Canister session not ready — reconnect and try again");
+      return;
+    }
     const token = tokenBalances.find((t) => t.id === selectedTokenId);
     if (!token) {
       setLocalError(`Token "${selectedTokenId}" not found`);
@@ -73,22 +59,32 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     }
 
     const odinAmount = OdinUtils.convertToOdinAmount(amount, token);
-    console.log(
-      `Depositing ${numAmount} ${token.ticker} (Odin amount: ${odinAmount}) for user ${connectedUser.principal}`,
-    );
+    if (odinAmount <= 0n) {
+      setLocalError("Amount too small");
+      return;
+    }
 
-    // Not awaited: in redirect mode the page reloads and the result arrives
-    // through wallet state. The display amount travels in returnState.
+    // Step 1: ICRC-2 approval through Odin. Not awaited — the result arrives
+    // through wallet state (popup or redirect) and WalletContext then calls
+    // the canister's `deposit`, which pulls the approved funds.
+    const returnState: ApprovalReturnState = { flow: "deposit" };
     void connectedUser.icrcApprove({
       token: selectedTokenId,
       amount: odinAmount,
       spender: APP_CANISTER_ID,
-      returnState: { flow: "deposit", displayAmount: numAmount },
+      returnState,
     });
   }
 
+  const label =
+    flowStage === "approving"
+      ? "Approving…"
+      : flowStage === "crediting"
+        ? "Crediting…"
+        : "Deposit";
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Deposit</h2>
 
@@ -97,6 +93,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
           <select
             id="token-select"
             value={selectedTokenId}
+            disabled={busy}
             onChange={(e) => {
               setSelectedTokenId(e.target.value);
               setAmount("");
@@ -107,7 +104,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             </option>
             {tokenBalances.map((token) => (
               <option key={token.id} value={token.id}>
-                {token.id} {token.ticker}
+                {token.ticker} ({token.id})
               </option>
             ))}
           </select>
@@ -129,6 +126,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             step="any"
             placeholder="0.00"
             value={amount}
+            disabled={busy}
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>
@@ -138,7 +136,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             <button
               key={pct}
               className="btn"
-              disabled={!selectedTokenId}
+              disabled={!selectedTokenId || busy}
               onClick={() => setAmount(String((walletBalance * pct) / 100))}
             >
               {pct}%
@@ -150,15 +148,10 @@ export default function DepositModal({ onClose }: DepositModalProps) {
 
         <button
           className="btn btn-deposit"
-          disabled={
-            !selectedTokenId ||
-            Number(amount) <= 0 ||
-            Number(amount) > walletBalance ||
-            isDepositing
-          }
+          disabled={invalid || busy}
           onClick={handleDeposit}
         >
-          {isDepositing ? "Depositing..." : "Deposit"}
+          {label}
         </button>
       </div>
     </div>

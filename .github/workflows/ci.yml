@@ -20,11 +20,31 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "pnpm"
 
+      - name: Install Rust wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install dfx
+        run: |
+          DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> "$GITHUB_PATH"
+
+      - name: Prime dfx cache
+        run: dfx cache install
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install Azle dfx extension
+        run: pnpm --filter @plinko/canister exec azle extension install
 
       - name: Type-check
         run: pnpm typecheck
 
+      - name: Test
+        run: pnpm test
+
       - name: Build frontend
         run: pnpm build:frontend
+
+      - name: Build canister
+        run: dfx build canister --check

@@ -6,69 +6,32 @@ import {
   type Dispatch,
 } from "react";
 import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
-import { useWallet } from "../contexts/WalletContext.tsx";
-import { computeLayout, updateBalls, draw } from "../engine.js";
-import { getScale } from "../constants.js";
-import { playPegHit, playLaunch, playLanding } from "../sounds.js";
-import type { Risk, GameAction } from "../contexts/GameContext.tsx";
-
-interface Peg {
-  x: number;
-  y: number;
-  glow: number;
-}
-interface Slot {
-  x: number;
-  y: number;
-  width: number;
-  multiplier: number;
-}
-interface Ball {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  trail: Array<{ x: number; y: number }>;
-  bet: number;
-  risk: Risk;
-  rows: number;
-  active: boolean;
-}
-interface SlotFlash {
-  index: number;
-  alpha: number;
-}
-
-interface AnimationState {
-  balls: Ball[];
-  pegs: Peg[];
-  slots: Slot[];
-  slotFlashes: SlotFlash[];
-}
+import {
+  computeLayout,
+  createBall,
+  draw,
+  updateBalls,
+  type AnimationState,
+  type BallSpawn,
+} from "../engine.ts";
+import { playPegHit, playLanding } from "../sounds.js";
+import type { Risk, Rows, GameAction } from "../contexts/GameContext.tsx";
 
 interface Dimensions {
   W: number;
   H: number;
 }
 
-interface Settings {
-  balance: number;
-  bet: number;
-  risk: Risk;
-  rows: number;
-}
-
 export interface PlinkoCanvasRef {
-  spawnBall: () => void;
+  /** Animate a bet the canister already resolved. */
+  spawnBall: (spawn: BallSpawn) => void;
 }
 
 const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameState = useGameState();
   const dispatch = useGameDispatch();
-  const { connectedUser } = useWallet();
 
-  // Refs for animation-frame data (never triggers re-renders)
   const animRef = useRef<AnimationState>({
     balls: [],
     pegs: [],
@@ -76,75 +39,32 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
     slotFlashes: [],
   });
   const dimsRef = useRef<Dimensions>({ W: 0, H: 0 });
-
-  // Sync React state into a ref so the rAF loop can read it without stale closures
-  const settingsRef = useRef<Settings>({
-    balance: gameState.balance,
-    bet: gameState.bet,
+  const tableRef = useRef<{ risk: Risk; rows: Rows }>({
     risk: gameState.risk,
     rows: gameState.rows,
   });
 
   useEffect(() => {
-    settingsRef.current = {
-      balance: gameState.balance,
-      bet: gameState.bet,
-      risk: gameState.risk,
-      rows: gameState.rows,
-    };
-  }, [gameState.balance, gameState.bet, gameState.risk, gameState.rows]);
-
-  // Recompute layout when risk/rows change
-  useEffect(() => {
+    tableRef.current = { risk: gameState.risk, rows: gameState.rows };
     const { W, H } = dimsRef.current;
     if (W > 0 && H > 0) {
-      const { pegs, slots } = computeLayout(
-        gameState.rows,
-        gameState.risk,
-        W,
-        H,
-      );
+      const { pegs, slots } = computeLayout(gameState.rows, gameState.risk, W, H);
       animRef.current.pegs = pegs;
       animRef.current.slots = slots;
     }
   }, [gameState.rows, gameState.risk]);
 
-  // Stable dispatch ref so callbacks don't go stale
   const dispatchRef = useRef<Dispatch<GameAction>>(dispatch);
   dispatchRef.current = dispatch;
 
-  const connectedUserRef = useRef(connectedUser);
-  connectedUserRef.current = connectedUser;
-
-  // Spawn ball function exposed via imperative handle
-  const spawnBall = useRef(() => {
-    if (!connectedUserRef.current) return;
-    const { balance, bet, risk, rows } = settingsRef.current;
-    if (bet > balance) return;
-
-    dispatchRef.current({ type: "DEDUCT_BET", payload: bet });
-    // Update local ref immediately so rapid clicks read correct balance
-    settingsRef.current.balance -= bet;
-    playLaunch();
-
-    const { W } = dimsRef.current;
-    const s = getScale(W);
-    animRef.current.balls.push({
-      x: W / 2 + (Math.random() - 0.5) * 20 * s,
-      y: 20 * s,
-      vx: 0,
-      vy: 0,
-      trail: [],
-      bet,
-      risk,
-      rows,
-      active: true,
-    });
+  const spawnBall = useRef((spawn: BallSpawn) => {
+    const { W, H } = dimsRef.current;
+    if (W <= 0 || H <= 0) return;
+    animRef.current.balls.push(createBall(spawn, W, H));
   }).current;
 
   useImperativeHandle(ref, () => ({ spawnBall }), [spawnBall]);
 
-  // Canvas setup + animation loop (runs once on mount)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -167,7 +87,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
       canvas.style.height = H + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const { rows, risk } = settingsRef.current;
+      const { rows, risk } = tableRef.current;
       const { pegs, slots } = computeLayout(rows, risk, W, H);
       animRef.current.pegs = pegs;
       animRef.current.slots = slots;
@@ -176,21 +96,19 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
     function loop() {
       if (!ctx) return;
       const { W, H } = dimsRef.current;
-      const { landings, pegHits } = updateBalls(animRef.current, W, H);
+      const { landings, pegHits } = updateBalls(animRef.current, W);
 
       if (pegHits > 0) playPegHit();
 
-      for (const { mult, winnings } of landings) {
-        dispatchRef.current({ type: "ADD_WINNINGS", payload: winnings });
+      for (const { multiplierX100, payout } of landings) {
         dispatchRef.current({
           type: "SET_LAST_WIN",
-          payload: { mult, amount: winnings },
+          payload: { multiplierX100, payout },
         });
-        settingsRef.current.balance += winnings;
-        playLanding(mult);
+        playLanding(multiplierX100 / 100);
       }
 
-      draw(ctx, animRef.current, W, H, settingsRef.current.risk);
+      draw(ctx, animRef.current, W, H, tableRef.current.risk);
       rafId = requestAnimationFrame(loop);
     }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PlinkoCanvas, {
   type PlinkoCanvasRef,
 } from "./components/PlinkoCanvas.tsx";
@@ -10,51 +10,58 @@ import RiskSelector from "./components/RiskSelector.tsx";
 import DropButton from "./components/DropButton.tsx";
 import LastWin from "./components/LastWin.tsx";
 import DepositModal from "./components/DepositModal.tsx";
+import WithdrawModal from "./components/WithdrawModal.tsx";
 import { useWallet } from "./contexts/WalletContext.tsx";
+import { usePlay } from "./hooks/usePlay.ts";
 
 export default function App() {
   const canvasRef = useRef<PlinkoCanvasRef>(null);
-  const { connectedUser, request } = useWallet();
+  const { connectedUser, request, internalBalances, internalLoaded } =
+    useWallet();
+  const { play, canPlay } = usePlay(canvasRef);
   const [showDepositModal, setShowDepositModal] = useState(false);
-  const prevConnected = useRef(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const promptedRef = useRef(false);
 
-  const handleDrop = useCallback(() => {
-    canvasRef.current?.spawnBall();
-  }, []);
-
-  // Auto-open deposit modal when wallet connects, close on disconnect.
-  // A session restored right after a redirect-mode approve is not a fresh
-  // connect, so leave the modal closed then.
+  // Offer a deposit once per session when the player has nothing to play
+  // with. Not after a redirect-return from an approval: that flow is already
+  // crediting.
   useEffect(() => {
-    if (
-      connectedUser &&
-      !prevConnected.current &&
-      request?.action !== "icrc_approve"
-    ) {
-      setShowDepositModal(true);
-    } else if (!connectedUser) {
+    if (!connectedUser) {
+      promptedRef.current = false;
       setShowDepositModal(false);
+      setShowWithdrawModal(false);
+      return;
     }
-    prevConnected.current = !!connectedUser;
-  }, [connectedUser, request]);
+    if (promptedRef.current || !internalLoaded) return;
+    if (request?.action === "icrc_approve") return;
+    promptedRef.current = true;
+    if (!internalBalances.some((b) => b.amount > 0n)) {
+      setShowDepositModal(true);
+    }
+  }, [connectedUser, internalLoaded, internalBalances, request]);
 
   // Keyboard shortcut: Space to drop ball
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.code === "Space" && (e.target as HTMLElement).tagName !== "INPUT") {
+      const tag = (e.target as HTMLElement).tagName;
+      if (e.code === "Space" && tag !== "INPUT" && tag !== "SELECT") {
         e.preventDefault();
-        canvasRef.current?.spawnBall();
+        play();
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [play]);
 
   return (
     <div className="container">
       <h1 className="title">PLINKODIN</h1>
       <div className="top-bar">
-        <WalletSection onDeposit={() => setShowDepositModal(true)} />
+        <WalletSection
+          onDeposit={() => setShowDepositModal(true)}
+          onWithdraw={() => setShowWithdrawModal(true)}
+        />
         {connectedUser && (
           <div className="balance-row">
             <BalanceDisplay />
@@ -69,10 +76,13 @@ export default function App() {
         <BetControls />
         <RowsSelector />
         <RiskSelector />
-        <DropButton onDrop={handleDrop} />
+        <DropButton onDrop={play} disabled={!canPlay} />
       </div>
       {showDepositModal && (
         <DepositModal onClose={() => setShowDepositModal(false)} />
+      )}
+      {showWithdrawModal && (
+        <WithdrawModal onClose={() => setShowWithdrawModal(false)} />
       )}
     </div>
   );

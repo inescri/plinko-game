@@ -2,9 +2,13 @@ import { useWallet } from "../contexts/WalletContext.tsx";
 
 interface WalletSectionProps {
   onDeposit?: () => void;
+  onWithdraw?: () => void;
 }
 
-export default function WalletSection({ onDeposit }: WalletSectionProps) {
+export default function WalletSection({
+  onDeposit,
+  onWithdraw,
+}: WalletSectionProps) {
   const {
     connectedUser,
     principal,
@@ -12,9 +16,11 @@ export default function WalletSection({ onDeposit }: WalletSectionProps) {
     connectionError,
     connectWallet,
     disconnectWallet,
+    internalBalances,
   } = useWallet();
 
   if (connectedUser) {
+    const canWithdraw = internalBalances.some((b) => b.amount > 0n);
     return (
       <div className="wallet-section">
         <div className="wallet-connected" style={{ display: "flex" }}>
@@ -25,6 +31,13 @@ export default function WalletSection({ onDeposit }: WalletSectionProps) {
           <div className="wallet-actions">
             <button className="btn btn-open-deposit" onClick={onDeposit}>
               Deposit
+            </button>
+            <button
+              className="btn btn-open-deposit"
+              onClick={onWithdraw}
+              disabled={!canWithdraw}
+            >
+              Withdraw
             </button>
             <button className="btn btn-disconnect" onClick={disconnectWallet}>
               Disconnect

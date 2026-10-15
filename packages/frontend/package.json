@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dfinity/agent": "^3.4.3",
+    "@dfinity/candid": "^3.4.3",
+    "@dfinity/principal": "^3.4.3",
+    "@plinko/shared": "workspace:*",
     "odin-connect": "^2.0.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

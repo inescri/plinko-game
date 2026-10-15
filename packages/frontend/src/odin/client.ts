@@ -8,7 +8,7 @@ type OdinEnv = "prod" | "dev" | "local";
  * without code changes.
  */
 const APP_NAME = import.meta.env.VITE_ODIN_APP_NAME ?? "Plinko";
-const APP_ENV = (import.meta.env.VITE_ODIN_ENV ?? "dev") as OdinEnv;
+const APP_ENV = (import.meta.env.VITE_ODIN_ENV ?? "prod") as OdinEnv;
 
 /**
  * The one `OdinConnect` instance for this page load (odin-connect 2.0).

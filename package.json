@@ -8,9 +8,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "pnpm build:frontend",
+    "build": "pnpm build:frontend && pnpm build:canister",
+    "build:canister": "dfx build canister --check",
     "build:frontend": "pnpm --filter @plinko/frontend build",
     "dev:frontend": "pnpm --filter @plinko/frontend dev",
+    "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },
   "repository": {

@@ -1,5 +1,11 @@
 packages:
   - "packages/*"
 
-onlyBuiltDependencies:
-  - esbuild
+# Azle's dfx build extension shells out to `npm exec`, which expects an
+# npm-style flat node_modules. pnpm's default isolated store hides Azle's
+# transitive deps, so use the hoisted layout for compatibility.
+nodeLinker: hoisted
+
+allowBuilds:
+  azle: true
+  esbuild: true

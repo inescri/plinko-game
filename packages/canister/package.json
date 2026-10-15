@@ -1,0 +1,22 @@
+{
+  "name": "@plinko/canister",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "postinstall": "command -v dfx >/dev/null 2>&1 && azle extension install || echo 'dfx not found — skipping azle extension install (run: pnpm --filter @plinko/canister exec azle extension install)'",
+    "build": "echo 'Build the canister from the repo root with dfx: pnpm build:canister'",
+    "typecheck": "echo 'canister types are checked by the Azle compiler — run: dfx build canister --check'",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dfinity/principal": "^3.4.0",
+    "@plinko/shared": "workspace:*",
+    "azle": "0.33.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
+  }
+}
