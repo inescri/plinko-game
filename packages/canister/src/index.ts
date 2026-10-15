@@ -55,7 +55,8 @@ const TRUSTED_ORIGINS: string[] = [
     'http://localhost:5173',
     // Local dev — Vite dev server (fallback port when 5173 is taken).
     'http://localhost:5174',
-    // TODO: add the production frontend origin before going live.
+    // Production — Netlify deployment of packages/frontend.
+    'https://plinko-a86.netlify.app',
 ];
 
 /**

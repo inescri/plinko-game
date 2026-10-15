@@ -141,9 +141,10 @@ be exercised; the full flow needs `--network ic`.
 
 > **ICRC-28 / Odin Connect auth:** `TRUSTED_ORIGINS` in
 > [`packages/canister/src/index.ts`](packages/canister/src/index.ts) lists
-> `http://localhost:5173` and `:5174` only. **Add the deployed frontend
-> origin before going live** (bare `scheme://host[:port]`, exact match) or
-> login fails. The endpoint must stay `update` so the signer gets a certified
+> `http://localhost:5173`, `:5174` and the production origin
+> `https://plinko-a86.netlify.app`. **Any new frontend origin must be added
+> there and the canister redeployed** (bare `scheme://host[:port]`, exact
+> match) or login fails. The endpoint must stay `update` so the signer gets a certified
 > reply.
 
 Tokens are identified by their **Odin token id** (text); every Odin token
@@ -168,6 +169,15 @@ See `ODIN_BTC_FEE` in
 Confirm it matches the live ledger fee before going live.
 
 ## Deploy to mainnet
+
+Live deployment: canister `zcbwm-eqaaa-aaaau-ahevq-cai`, frontend
+https://plinko-a86.netlify.app. `canister_ids.json` is git-ignored, so a fresh
+clone must recreate it before `dfx deploy --network ic` or dfx will create a
+second canister:
+
+```json
+{ "canister": { "ic": "zcbwm-eqaaa-aaaau-ahevq-cai" } }
+```
 
 1. Fund your identity with cycles (`dfx identity get-principal`).
 2. `pnpm build && dfx deploy --network ic`. The deploying principal becomes
