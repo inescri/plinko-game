@@ -48,6 +48,19 @@ export function parseTokenAmount(
   }
 }
 
+/**
+ * JS number → plain decimal string with at most `places` fraction digits,
+ * trailing zeros trimmed. Never exponent notation, which `parseTokenAmount`
+ * rejects (e.g. `String(1e-7)`).
+ */
+export function toPlainDecimal(value: number, places: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "0";
+  return value
+    .toFixed(Math.min(Math.max(places, 0), 100))
+    .replace(/(\.\d*?)0+$/, "$1")
+    .replace(/\.$/, "");
+}
+
 /** Base units × a percentage, floored. */
 export function percentOf(raw: bigint, pct: number): bigint {
   return (raw * BigInt(pct)) / 100n;

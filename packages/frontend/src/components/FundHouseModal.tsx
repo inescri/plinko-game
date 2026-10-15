@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { maxBetForHouse } from "@plinko/shared";
-import { OdinUtils } from "odin-connect";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
 import type { ApprovalReturnState } from "../odin/approvalFlow.ts";
-import { formatFixed, placesOf } from "../lib/amounts.ts";
+import { formatFixed, parseTokenAmount, placesOf, toPlainDecimal } from "../lib/amounts.ts";
 
 interface FundHouseModalProps {
   onClose: () => void;
@@ -47,7 +46,7 @@ export default function FundHouseModal({ onClose }: FundHouseModalProps) {
   const invalid = !token || numAmount <= 0 || numAmount > walletBalance;
 
   const places = token ? placesOf(token) : 0;
-  const raw = token && numAmount > 0 ? OdinUtils.convertToOdinAmount(amount, token) : 0n;
+  const raw = token && numAmount > 0 ? parseTokenAmount(amount, token) : 0n;
   const houseAfter = (houseBalance ?? 0n) + raw;
   // The worst case for the bankroll: the 1000x slot on 16 rows / high.
   const maxBetAfter = maxBetForHouse(houseAfter, "high", 16);
@@ -127,7 +126,7 @@ export default function FundHouseModal({ onClose }: FundHouseModalProps) {
               key={pct}
               className="btn"
               disabled={!token || busy}
-              onClick={() => setAmount(String((walletBalance * pct) / 100))}
+              onClick={() => setAmount(toPlainDecimal((walletBalance * pct) / 100, places))}
             >
               {pct}%
             </button>

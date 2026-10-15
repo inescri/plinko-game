@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useWallet } from "../contexts/WalletContext.tsx";
-import { OdinUtils } from "odin-connect";
 import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
 import type { ApprovalReturnState } from "../odin/approvalFlow.ts";
+import { parseTokenAmount, placesOf, toPlainDecimal } from "../lib/amounts.ts";
 
 interface DepositModalProps {
   onClose: () => void;
@@ -39,6 +39,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
   const walletBalance = getWalletBalance(GAME_TOKEN_ID);
   const numAmount = Number(amount);
   const invalid = !token || numAmount <= 0 || numAmount > walletBalance;
+  const places = token ? placesOf(token) : 0;
 
   function handleDeposit() {
     if (invalid || busy || !token) return;
@@ -57,7 +58,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
       return;
     }
 
-    const odinAmount = OdinUtils.convertToOdinAmount(amount, token);
+    const odinAmount = parseTokenAmount(amount, token);
     if (odinAmount <= 0n) {
       setLocalError("Amount too small");
       return;
@@ -114,7 +115,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
               key={pct}
               className="btn"
               disabled={!token || busy}
-              onClick={() => setAmount(String((walletBalance * pct) / 100))}
+              onClick={() => setAmount(toPlainDecimal((walletBalance * pct) / 100, places))}
             >
               {pct}%
             </button>
