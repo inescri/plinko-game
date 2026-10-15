@@ -23,6 +23,10 @@ export default function BetControls() {
   const commit = (raw: bigint) => {
     const clamped = raw < 0n ? 0n : minBigInt(raw, cap);
     dispatch({ type: "SET_BET", payload: clamped });
+    // Resync here too: when the clamped value equals the current bet the
+    // effect above does not fire, and the field would keep showing the
+    // oversized (or unparsable) text the user typed.
+    setText(formatTokenAmount(clamped, places));
   };
 
   return (
