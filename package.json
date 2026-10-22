@@ -9,8 +9,10 @@
   },
   "scripts": {
     "build": "pnpm build:frontend && pnpm build:canister",
-    "build:canister": "dfx build canister --check",
+    "build:canister": "dfx build canister --check && dfx build canister_dev --check",
     "build:frontend": "pnpm --filter @plinko/frontend build",
+    "deploy:dev": "dfx deploy canister_dev --argument '(record { ledger_id = principal \"w5cxm-6iaaa-aaaaj-az4jq-cai\" })'",
+    "deploy:prod": "dfx deploy canister --argument '(record { ledger_id = principal \"yspgd-ciaaa-aaaaj-a6rrq-cai\" })'",
     "dev:frontend": "pnpm --filter @plinko/frontend dev",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"

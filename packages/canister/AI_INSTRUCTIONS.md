@@ -16,8 +16,9 @@ src/
   index.ts      # canister class — endpoints + StableBTreeMap wiring
   ledger.ts     # pure ledger logic (key encoding, validation, balance math)
   odin.ts       # Odin ledger client (icrc2_transfer_from / icrc1_transfer)
+  odin_ledger.ts# pure Odin ledger-id validation + upgrade immutability rule
   game.ts       # pure bet resolution (path, slot, payout) — unit-tested
-  ledger.test.ts, game.test.ts  # vitest unit tests for the pure logic
+  *.test.ts     # vitest unit tests for the pure logic
 ```
 
 ## Hard rules
@@ -40,6 +41,11 @@ src/
    payout credit; randomness comes from `crypto.getRandomValues` (seeded from
    `raw_rand`). The house-exposure check before the draw is what keeps every
    credited payout backed by real funds.
+7. **The Odin ledger id is immutable after install.** It is the `ledger_id`
+   init argument, stored in `config`. Do not add a setter, and do not weaken
+   `resolveUpgradeLedgerId` in `postUpgrade`: every balance (players and
+   house) is backed by funds on that one ledger, so switching it lets
+   withdrawals pay out unbacked funds.
 
 ## Patterns to follow
 

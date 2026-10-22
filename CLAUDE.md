@@ -42,6 +42,9 @@ odin-connect 2.x · pnpm workspace (hoisted linker) · Node 22+ · dfx.
   payout credit, and the house-exposure check stays before the draw.
 - The multiplier tables in `packages/shared/src/index.ts` (they set the house
   edge; `pnpm test` asserts 95-99 % return under a fair walk).
+- The Odin ledger id is immutable after install: it is the `ledger_id` init
+  argument validated by `packages/canister/src/odin_ledger.ts` and re-checked
+  in `postUpgrade`. No setter; do not weaken `resolveUpgradeLedgerId`.
 
 Guarded sections are marked `⚠️ AI-GUARD`. If a task seems to require touching
 them, stop and surface it to a human.
@@ -101,13 +104,22 @@ pnpm dev:frontend            # Vite dev server
 
 # Local replica
 dfx start --clean --background
-dfx deploy                   # builds + deploys canister and frontend
-# then copy CANISTER_ID_CANISTER from the root .env into
-# packages/frontend/.env as VITE_APP_CANISTER_ID
+pnpm deploy:dev              # canister_dev with the Odin dev ledger init arg
+dfx deploy frontend
+# then copy CANISTER_ID_CANISTER_DEV from the root .env into
+# packages/frontend/.env as VITE_APP_CANISTER_ID and set VITE_ODIN_ENV=dev
 ```
+
+Two dfx canisters share `packages/canister/src/index.ts`: `canister` (prod
+ledger `yspgd`, mainnet `zcbwm-eqaaa-aaaau-ahevq-cai`, `pnpm deploy:prod`) and
+`canister_dev` (dev ledger `w5cxm`, mainnet `cs2c3-5yaaa-aaaau-ahgga-cai`,
+`pnpm deploy:dev`). The frontend's `VITE_ODIN_ENV` must match the canister's
+ledger. The prod canister predates the init argument: upgrade it only with
+`deploy:prod`, never `deploy:dev` (see README "Odin ledger").
 
 Deposits, withdrawals and `fundHouse` talk to the mainnet Odin ledger, so they
 only work on `--network ic`. `play` needs a funded house (`fundHouse`).
 
 CI (`.github/workflows/ci.yml`) runs typecheck, tests, the frontend build and
-`dfx build canister --check` on every push/PR. Do not merge red.
+`dfx build canister --check` on every push/PR (same wasm as `canister_dev`).
+Do not merge red.
