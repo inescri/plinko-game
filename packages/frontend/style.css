@@ -607,6 +607,22 @@ body {
   border-radius: 6px;
 }
 
+.modal-link {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-weight: 600;
+  color: rgba(0, 255, 200, 0.7);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.modal-link:hover {
+  color: #00ffc8;
+  text-decoration: underline;
+}
+
 .btn-deposit {
   background: linear-gradient(
     135deg,

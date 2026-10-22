@@ -35,7 +35,25 @@ export function parseOdinEnv(raw: string | undefined): OdinEnv {
  * deployed with (`getOdinLedger`).
  */
 const APP_NAME = import.meta.env.VITE_ODIN_APP_NAME ?? "Plinko";
-const APP_ENV = parseOdinEnv(import.meta.env.VITE_ODIN_ENV);
+export const APP_ENV = parseOdinEnv(import.meta.env.VITE_ODIN_ENV);
+
+/**
+ * Odin web app origin per environment. Mirrors the SDK's internal map (not
+ * exported by odin-connect) so "buy on Odin" links land on the same site the
+ * wallet session belongs to: a dev token only exists on dev.odin.fun.
+ */
+const ODIN_SITE_URLS: Record<OdinEnv, string> = {
+  prod: "https://odin.fun",
+  staging: "https://staging.odin.fun",
+  dev: "https://dev.odin.fun",
+  local: "http://localhost:5173",
+  legacy: "https://legacy.odin.fun",
+};
+
+/** Odin token page for `tokenId` on the configured environment. */
+export function odinTokenUrl(tokenId: string, env: OdinEnv = APP_ENV): string {
+  return `${ODIN_SITE_URLS[env]}/token/${encodeURIComponent(tokenId)}`;
+}
 
 /**
  * The one `OdinConnect` instance for this page load (odin-connect 2.0).

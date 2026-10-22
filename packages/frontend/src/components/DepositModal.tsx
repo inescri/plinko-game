@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
 import type { ApprovalReturnState } from "../odin/approvalFlow.ts";
+import { odinTokenUrl } from "../odin/client.ts";
 import { parseTokenAmount, placesOf, toPlainDecimal } from "../lib/amounts.ts";
 
 interface DepositModalProps {
@@ -40,6 +41,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
   const numAmount = Number(amount);
   const invalid = !token || numAmount <= 0 || numAmount > walletBalance;
   const places = token ? placesOf(token) : 0;
+  const buyUrl = odinTokenUrl(GAME_TOKEN_ID);
 
   function handleDeposit() {
     if (invalid || busy || !token) return;
@@ -127,6 +129,14 @@ export default function DepositModal({ onClose }: DepositModalProps) {
             No {ticker} in your Odin wallet to deposit.
           </div>
         )}
+        <a
+          className="modal-link"
+          href={buyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Buy {ticker} on Odin ↗
+        </a>
         {error && <div className="deposit-error">{error}</div>}
 
         <button
