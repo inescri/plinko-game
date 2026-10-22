@@ -82,8 +82,16 @@ rustup target add wasm32-unknown-unknown
 ```sh
 pnpm install          # installs workspace deps + the azle dfx extension (if dfx is on PATH)
 dfx start --clean --background
-dfx deploy            # build + deploy canister and frontend
+pnpm deploy:dev       # build + deploy the canister against the Odin dev ledger
+dfx deploy frontend   # build + deploy the frontend asset canister
 ```
+
+The canister takes the **Odin ledger** it holds funds on as a required init
+argument (see [Odin ledger](#odin-ledger)). `pnpm deploy:dev` / `pnpm
+deploy:prod` pass it for you; a bare `dfx deploy` prompts for it. The frontend
+asset canister does not depend on the app canister in `dfx.json` (it gets the
+canister id from `VITE_APP_CANISTER_ID`), so `dfx deploy frontend` never
+redeploys the canister without its argument.
 
 > If `pnpm install` ran before `dfx` was installed:
 > `pnpm --filter @plinko/canister exec azle extension install`
@@ -92,7 +100,8 @@ Then point the frontend at the canister and start the dev server:
 
 ```sh
 cp packages/frontend/.env.example packages/frontend/.env
-# set VITE_APP_CANISTER_ID to CANISTER_ID_CANISTER from the root .env
+# set VITE_APP_CANISTER_ID to CANISTER_ID_CANISTER_DEV from the root .env
+# (or CANISTER_ID_CANISTER after `pnpm deploy:prod`) and VITE_ODIN_ENV to match
 pnpm dev:frontend
 ```
 
@@ -104,12 +113,14 @@ be exercised; the full flow needs `--network ic`.
 
 | Command               | Description                              |
 | --------------------- | ---------------------------------------- |
-| `pnpm build`          | Frontend dist + `dfx build canister --check` |
-| `pnpm build:canister` | Build the Azle canister                  |
+| `pnpm build`          | Frontend dist + `dfx build … --check` for both canisters |
+| `pnpm build:canister` | Build the Azle canister (`canister` and `canister_dev`) |
 | `pnpm build:frontend` | Build the frontend                       |
+| `pnpm deploy:dev`     | Deploy `canister_dev` on the Odin dev ledger |
+| `pnpm deploy:prod`    | Deploy `canister` on the Odin prod/staging ledger |
 | `pnpm dev:frontend`   | Start the Vite dev server                |
 | `pnpm typecheck`      | Type-check frontend + shared             |
-| `pnpm test`           | Unit tests (tables, ledger core, bet resolution) |
+| `pnpm test`           | Unit tests (tables, ledger core, ledger id, bet resolution) |
 
 ## Environment
 
@@ -118,8 +129,8 @@ be exercised; the full flow needs `--network ic`.
 | Variable               | Purpose                                              |
 | ---------------------- | ---------------------------------------------------- |
 | `VITE_ODIN_APP_NAME`   | Name shown on the Odin approval page                 |
-| `VITE_ODIN_ENV`        | `prod` (the canister uses the prod Odin ledger)      |
-| `VITE_APP_CANISTER_ID` | App canister id (spender + actor target)             |
+| `VITE_ODIN_ENV`        | `prod`, `staging`, `dev`, `local` or `legacy`; must match the canister's ledger (see [Odin ledger](#odin-ledger)) |
+| `VITE_APP_CANISTER_ID` | App canister id (spender + actor target): `canister` for prod, `canister_dev` for dev |
 | `VITE_GAME_TOKEN_ID`   | The one Odin token players deposit and bet with (`btc`) |
 | `VITE_HOUSE_ADMINS`    | Odin principals shown the "Fund house" button (UI gate only) |
 | `VITE_DFX_NETWORK`     | `local` (fetches the root key) or `ic`               |
@@ -139,6 +150,7 @@ be exercised; the full flow needs `--network ic`.
 | `getHouseBalance(token)` / `getHouseBalances()` | query | House bankroll.                                   |
 | `getMaxBet(token, rows, risk)` | query | Largest bet the bankroll covers for that table.                  |
 | `getOwner()`             | query  | The deploying principal.                                               |
+| `getOdinLedger()`        | update | The Odin ledger canister this canister holds funds on (certified).     |
 | `icrc28_trusted_origins` | update | ICRC-28 trusted origins — the web origins allowed to request signed calls. |
 
 > **ICRC-28 / Odin Connect auth:** `TRUSTED_ORIGINS` in
@@ -154,6 +166,46 @@ shares one ledger and is addressed by subaccount (`odin_token_pointer`).
 Balances are keyed by `(owner, tokenId)` in stable memory, so they survive
 upgrades. `rows` is one of 8, 10, 12, 14, 16; `risk` is `low`, `medium` or
 `high`. Bets and balances are base units (`bigint`).
+
+### Odin ledger
+
+Each Odin environment has its own ledger canister, and this repo deploys one
+app canister per ledger from the same source:
+
+| Environment    | `VITE_ODIN_ENV`   | Ledger canister               | dfx canister   | Deploy script      |
+| -------------- | ----------------- | ----------------------------- | -------------- | ------------------ |
+| dev            | `dev`             | `w5cxm-6iaaa-aaaaj-az4jq-cai` | `canister_dev` | `pnpm deploy:dev`  |
+| prod / staging | `prod`, `staging` | `yspgd-ciaaa-aaaaj-a6rrq-cai` | `canister`     | `pnpm deploy:prod` |
+
+The canister takes the ledger as its init argument,
+`(record { ledger_id = principal "<ledger>" })`, and rejects any principal not
+in the table above (`ODIN_LEDGER_IDS` in
+[`odin_ledger.ts`](packages/canister/src/odin_ledger.ts)). The frontend's
+`VITE_ODIN_ENV` **must match it** — otherwise users approve on one ledger while
+the canister pulls from another, and deposits fail.
+
+The ledger is **immutable after install**. Every internal balance (players and
+house) is backed by tokens held on that ledger, so switching ledgers would let
+withdrawals pay out funds that were never deposited there. On upgrade, pass the
+same argument again (the deploy scripts do this); an upgrade naming a different
+ledger traps and the old code keeps running. To change environment, reinstall
+(`dfx deploy <name> --mode reinstall …`, which **wipes all balances** — only on
+a canister holding no funds) or deploy a new canister.
+
+**Upgrading a canister installed before the ledger became an init argument**
+(the live prod canister `zcbwm-…` is one). Its ledger was a constant in
+`packages/canister/src/odin.ts`, and the canister has no record of it, so its
+first upgrade records whatever ledger you pass — **permanently**. The prod
+canister was built with `yspgd-…`, so upgrade it only with
+`pnpm deploy:prod --network ic`. Passing the dev ledger leaves every balance
+unbacked, and the only way out is a reinstall that wipes them. After the
+upgrade, confirm with `getOdinLedger`.
+
+Verify a deployed canister's ledger with:
+
+```sh
+dfx canister call canister_dev getOdinLedger '()' --network ic   # or: canister
+```
 
 ### Withdrawal fees
 
@@ -172,22 +224,37 @@ Confirm it matches the live ledger fee before going live.
 
 ## Deploy to mainnet
 
-Live deployment: canister `zcbwm-eqaaa-aaaau-ahevq-cai`, frontend
-https://plinko-a86.netlify.app. `canister_ids.json` is git-ignored, so a fresh
-clone must recreate it before `dfx deploy --network ic` or dfx will create a
-second canister:
+Live deployments (both on mainnet; the Odin ledgers are mainnet canisters):
+
+| dfx canister   | Odin ledger    | Canister id                   |
+| -------------- | -------------- | ----------------------------- |
+| `canister`     | prod / staging | `zcbwm-eqaaa-aaaau-ahevq-cai` |
+| `canister_dev` | dev            | `cs2c3-5yaaa-aaaau-ahgga-cai` |
+
+Frontend: https://plinko-a86.netlify.app (prod). `canister_ids.json` is
+git-ignored, so a fresh clone must recreate it before deploying with
+`--network ic` or dfx will create new canisters:
 
 ```json
-{ "canister": { "ic": "zcbwm-eqaaa-aaaau-ahevq-cai" } }
+{
+  "canister": { "ic": "zcbwm-eqaaa-aaaau-ahevq-cai" },
+  "canister_dev": { "ic": "cs2c3-5yaaa-aaaau-ahgga-cai" }
+}
 ```
 
-1. Fund your identity with cycles (`dfx identity get-principal`).
-2. `pnpm build && dfx deploy --network ic`. The deploying principal becomes
-   the owner.
+1. Fund your identity with cycles (`dfx identity get-principal`). Creating a
+   canister costs 500B cycles on top of its starting balance; the Azle wasm
+   install needs roughly another 130B on the canister
+   (`dfx canister create <name> --network ic --with-cycles …`).
+2. `pnpm build && pnpm deploy:prod --network ic` (or `pnpm deploy:dev
+   --network ic` for the dev-ledger canister). The deploying principal becomes
+   the owner. Then `dfx deploy frontend --network ic` if you host the frontend
+   on IC rather than Netlify.
 3. Put the canister id in `packages/frontend/.env` (`VITE_APP_CANISTER_ID`,
-   `VITE_DFX_NETWORK=ic`), add the frontend origin to `TRUSTED_ORIGINS`,
-   redeploy the canister. Verify:
-   `dfx canister call canister icrc28_trusted_origins '()' --network ic`.
+   `VITE_DFX_NETWORK=ic`, `VITE_ODIN_ENV` matching the ledger), add the
+   frontend origin to `TRUSTED_ORIGINS`, redeploy the canister. Verify:
+   `dfx canister call canister icrc28_trusted_origins '()' --network ic` and
+   `dfx canister call canister getOdinLedger '()' --network ic`.
 4. Fund the house in `VITE_GAME_TOKEN_ID` (the only token the frontend
    deposits and bets with; the canister itself is token-agnostic): approve
    put the funding account's Odin principal in `VITE_HOUSE_ADMINS`, sign in

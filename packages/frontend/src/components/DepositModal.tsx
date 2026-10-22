@@ -36,7 +36,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
   const ticker = token?.ticker ?? GAME_TOKEN_ID.toUpperCase();
   const busy = flowStage !== "idle";
   const error = localError ?? flowError;
-  const walletBalance = getWalletBalance(GAME_TOKEN_ID);
+  const walletBalance = getWalletBalance();
   const numAmount = Number(amount);
   const invalid = !token || numAmount <= 0 || numAmount > walletBalance;
   const places = token ? placesOf(token) : 0;

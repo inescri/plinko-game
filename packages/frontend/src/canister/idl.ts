@@ -24,6 +24,7 @@ export const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     ),
     getHouseBalance: IDL.Func([IDL.Text], [IDL.Nat], ["query"]),
     getOwner: IDL.Func([], [IDL.Opt(IDL.Principal)], ["query"]),
+    getOdinLedger: IDL.Func([], [IDL.Principal], []),
     getMaxBet: IDL.Func([IDL.Text, IDL.Nat8, IDL.Text], [IDL.Nat], ["query"]),
     deposit: IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
     withdraw: IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
@@ -45,6 +46,7 @@ export interface CanisterActor {
   getBalances: ActorMethod<[], Array<[string, bigint]>>;
   getHouseBalance: ActorMethod<[string], bigint>;
   getOwner: ActorMethod<[], [] | [Principal]>;
+  getOdinLedger: ActorMethod<[], Principal>;
   getMaxBet: ActorMethod<[string, number, string], bigint>;
   deposit: ActorMethod<[string, bigint], bigint>;
   withdraw: ActorMethod<[string, bigint], bigint>;

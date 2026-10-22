@@ -36,8 +36,8 @@ export type FlowStage =
 interface WalletContextValue {
   connectedUser: OdinConnectedUser | null;
   principal: string;
-  /** Wallet holdings on Odin (what can be deposited). */
-  tokenBalances: readonly OdinBalance[];
+  /** Wallet holding of `GAME_TOKEN_ID` on Odin (what can be deposited), or null if none. */
+  walletBalance: OdinBalance | null;
   /** Balances held inside the app canister (what can be played/withdrawn). */
   internalBalances: readonly InternalBalance[];
   internalLoaded: boolean;
@@ -61,7 +61,8 @@ interface WalletContextValue {
   connectWallet: () => void;
   disconnectWallet: () => void;
   getTokenInfo: (tokenId: string) => TokenInfo | null;
-  getWalletBalance: (tokenId: string) => number;
+  /** `walletBalance` as a display number (0 when none). */
+  getWalletBalance: () => number;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
@@ -118,7 +119,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const dispatch = useGameDispatch();
   const game = useGameState();
 
-  const [tokenBalances, setTokenBalances] = useState<readonly OdinBalance[]>([]);
+  const [walletBalance, setWalletBalance] = useState<OdinBalance | null>(null);
   const [internalBalances, setInternalBalances] = useState<readonly InternalBalance[]>([]);
   const [internalLoaded, setInternalLoaded] = useState(false);
   const [tokenInfos, setTokenInfos] = useState<Record<string, TokenInfo>>({});
@@ -133,28 +134,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isHouseAdmin, setIsHouseAdmin] = useState(false);
   const [houseBalance, setHouseBalance] = useState<bigint | null>(null);
 
-  // ── Wallet holdings (Odin API) ──────────────────────────────────────────
+  // ── Wallet holding of the game token (Odin API) ─────────────────────────
+  // Only GAME_TOKEN_ID can be deposited, so fetch just that balance
+  // (`/user/<principal>/balances?token_in=<id>`) instead of the first page
+  // of every holding.
   useEffect(() => {
     if (!connectedUser) {
-      setTokenBalances([]);
+      setWalletBalance(null);
       return;
     }
     let cancelled = false;
     connectedUser
-      .getBalances({ page: 1, limit: 50 })
-      .then((balances) => {
+      .getBalance(GAME_TOKEN_ID)
+      .then((balance) => {
         if (cancelled) return;
-        const list = Array.isArray(balances) ? balances : [];
-        setTokenBalances(list);
-        setTokenInfos((prev) => {
-          const next = { ...prev };
-          for (const b of list) next[b.id] = toTokenInfo(b);
-          return next;
-        });
+        setWalletBalance(balance);
+        if (balance) {
+          setTokenInfos((prev) => ({ ...prev, [balance.id]: toTokenInfo(balance) }));
+        }
       })
       .catch((err) => {
-        console.error("Failed to fetch token balances:", err);
-        if (!cancelled) setTokenBalances([]);
+        console.error("Failed to fetch wallet balance:", err);
+        if (!cancelled) setWalletBalance(null);
       });
     return () => {
       cancelled = true;
@@ -498,11 +499,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getWalletBalance = useCallback(
-    (tokenId: string): number => {
-      const token = tokenBalances.find((b) => String(b.id) === String(tokenId));
-      return token ? displayBalance(token) : 0;
-    },
-    [tokenBalances],
+    (): number => (walletBalance ? displayBalance(walletBalance) : 0),
+    [walletBalance],
   );
 
   const value: WalletContextValue = {
@@ -510,7 +508,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     principal: connectedUser
       ? truncatePrincipal(connectedUser.principal || "Unknown")
       : "",
-    tokenBalances,
+    walletBalance,
     internalBalances,
     internalLoaded,
     refreshInternal,
