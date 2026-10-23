@@ -197,12 +197,15 @@ body {
   font-size: 15px;
   line-height: 1;
   text-shadow: 0 0 6px rgba(0, 255, 200, 0.4);
-  transition: color 0.2s, transform 0.2s;
+  /* Hover tilts via `rotate`, the spin animates `transform`: separate
+     properties, so they compose instead of fighting when a refresh ends
+     under the cursor. */
+  transition: color 0.2s, rotate 0.2s;
 }
 
 .btn-refresh:hover:not(:disabled) {
   color: #00ffc8;
-  transform: rotate(45deg);
+  rotate: 45deg;
 }
 
 .btn-refresh:disabled {
