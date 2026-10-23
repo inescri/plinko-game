@@ -24,11 +24,8 @@ import {
 
 import {
     HOUSE_OWNER,
-    houseExposure,
     houseExposureMany,
-    randomBytesFor,
     randomBytesForMany,
-    resolveBet,
     resolveBets,
 } from './game';
 
@@ -338,15 +335,11 @@ export default class {
     /**
      * Resolve one Plinko bet for the caller, entirely on-chain.
      *
-     * ⚠️ AI-GUARD: Every effect here is synchronous — there is NO await between
-     * the debit and the payout credit, so a bet is atomic and cannot be
-     * reentered. Randomness comes from `crypto.getRandomValues`, which Azle
-     * seeds from `raw_rand` (and this canister reseeds on a timer). Do not
-     * introduce an inter-canister call into this method.
+     * A one-ball drop: delegates to `playMany` so there is exactly one
+     * hardened settle path (debit → draw → credit) to audit and maintain.
+     * The Candid shape is the single-ball one callers have always had.
      *
-     * Solvency: the house must already hold the worst-case loss for this bet
-     * (`houseExposure`), so every payout the ledger credits is backed by funds
-     * the canister actually holds (bankroll + bets).
+     * ⚠️ AI-GUARD: keep this a thin synchronous wrapper; see `playMany`.
      */
     @update([IDL.Text, IDL.Nat, IDL.Nat8, IDL.Text], PlayResult)
     play(
@@ -355,56 +348,28 @@ export default class {
         rows: number,
         risk: string,
     ): PlayResultValue {
-        validateAmount(bet);
-        if (!isRows(rows)) {
-            throw new Error('rows must be one of 8, 10, 12, 14, 16');
-        }
-        if (!isRisk(risk)) {
-            throw new Error('risk must be low, medium or high');
-        }
-
-        const caller = msgCaller();
-        const callerKey = makeKey(caller.toText(), tokenId);
-        const houseKey = makeKey(HOUSE_OWNER, tokenId);
-
-        // CHECK: the caller can afford the bet and the house can afford the
-        // top payout.
-        const current = this.ledger.get(callerKey) ?? 0n;
-        const afterBet = debit(current, bet); // throws on insufficient funds
-        const house = this.ledger.get(houseKey) ?? 0n;
-        if (houseExposure(bet, risk, rows) > house) {
-            throw new Error('bet exceeds house limit');
-        }
-
-        // DRAW: one random bit per row.
-        const bytes = new Uint8Array(randomBytesFor(rows));
-        crypto.getRandomValues(bytes);
-        const outcome = resolveBet(bet, rows, risk, bytes);
-
-        // EFFECT: settle both sides before returning. `credit` rejects a zero
-        // amount, so a total loss leaves the post-bet balance as is.
-        const balance =
-            outcome.payout > 0n ? credit(afterBet, outcome.payout) : afterBet;
-        this.ledger.insert(callerKey, balance);
-        this.ledger.insert(houseKey, house + bet - outcome.payout);
-
+        const drop = this.playMany(tokenId, bet, rows, risk, 1);
+        const outcome = drop.outcomes[0];
         return {
             path: outcome.path,
             slot: outcome.slot,
-            multiplier_x100: outcome.multiplierX100,
+            multiplier_x100: outcome.multiplier_x100,
             payout: outcome.payout,
-            balance,
+            balance: drop.balance,
         };
     }
 
     /**
      * Resolve `count` Plinko balls at the same bet in one call, entirely
-     * on-chain. Same shape as `play`, batched: the whole stake is debited
-     * once, every path is drawn, and the summed payout is credited once.
+     * on-chain. The whole stake is debited once, every path is drawn, and
+     * the summed payout is credited once. `play` is a one-ball wrapper
+     * around this method; it is the only settle path.
      *
      * ⚠️ AI-GUARD: Every effect here is synchronous — there is NO await between
      * the debit and the payout credit, so a drop is atomic and cannot be
-     * reentered. Do not introduce an inter-canister call into this method.
+     * reentered. Randomness comes from `crypto.getRandomValues`, which Azle
+     * seeds from `raw_rand` (and this canister reseeds on a timer). Do not
+     * introduce an inter-canister call into this method.
      *
      * Solvency: the house must already hold the worst-case loss for ALL balls
      * (`houseExposureMany`: every ball in a top slot), so the summed payout
