@@ -4,6 +4,7 @@ import { APP_CANISTER_ID, GAME_TOKEN_ID } from "../canister/config.ts";
 import type { ApprovalReturnState } from "../odin/approvalFlow.ts";
 import { odinTokenUrl } from "../odin/client.ts";
 import { parseTokenAmount, placesOf, toPlainDecimal } from "../lib/amounts.ts";
+import RefreshBalanceButton from "./RefreshBalanceButton.tsx";
 
 interface DepositModalProps {
   onClose: () => void;
@@ -22,8 +23,6 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     flowStage,
     flowError,
     depositsCompleted,
-    refreshBalances,
-    isRefreshing,
     refreshError,
   } = useWallet();
 
@@ -97,16 +96,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
           {token
             ? `Wallet Balance: ${walletBalance.toFixed(2)} ${ticker}`
             : `Loading ${ticker}…`}
-          <button
-            type="button"
-            className={`btn-refresh${isRefreshing ? " is-refreshing" : ""}`}
-            title="Refresh balance"
-            aria-label="Refresh balance"
-            disabled={isRefreshing || busy}
-            onClick={() => void refreshBalances()}
-          >
-            ↻
-          </button>
+          <RefreshBalanceButton disabled={busy} />
         </div>
 
         <div className="control-group">
