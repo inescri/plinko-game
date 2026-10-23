@@ -134,7 +134,7 @@ export function maxBetForHouse(house: bigint, risk: Risk, rows: Rows): bigint {
  * to allow bigger drops; the Candid count is a `Nat16`, so anything below
  * 65536 needs no interface change.
  */
-export const MAX_BALLS_PER_DROP = 10;
+export const MAX_BALLS_PER_DROP = 1000;
 
 export function isBallCount(value: unknown): value is number {
   return (

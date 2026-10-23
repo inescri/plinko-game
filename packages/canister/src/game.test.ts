@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_BALLS_PER_DROP } from "@plinko/shared";
 import {
   HOUSE_OWNER,
   drawPath,
@@ -67,7 +68,7 @@ describe("resolveBets", () => {
       /random bytes/,
     );
     expect(() => randomBytesForMany(8, 0)).toThrow(/count/);
-    expect(() => randomBytesForMany(8, 11)).toThrow(/count/);
+    expect(() => randomBytesForMany(8, MAX_BALLS_PER_DROP + 1)).toThrow(/count/);
   });
 });
 

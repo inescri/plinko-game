@@ -3,7 +3,7 @@ import { MAX_BALLS_PER_DROP } from "@plinko/shared";
 import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
 
 /** Quick picks; anything up to MAX_BALLS_PER_DROP can be typed in the field. */
-const PRESETS = [1, 2, 3, 5, 10].filter((n) => n <= MAX_BALLS_PER_DROP);
+const PRESETS = [1, 10, 50, 100].filter((n) => n <= MAX_BALLS_PER_DROP);
 
 export default function BallCountSelector() {
   const { ballCount } = useGameState();
