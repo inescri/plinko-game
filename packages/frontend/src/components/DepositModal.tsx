@@ -22,6 +22,8 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     flowStage,
     flowError,
     depositsCompleted,
+    refreshBalances,
+    isRefreshing,
   } = useWallet();
 
   const [amount, setAmount] = useState("");
@@ -90,10 +92,20 @@ export default function DepositModal({ onClose }: DepositModalProps) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Deposit {ticker}</h2>
 
-        <div className="modal-balance-info">
+        <div className="modal-balance-info with-refresh">
           {token
             ? `Wallet Balance: ${walletBalance.toFixed(2)} ${ticker}`
             : `Loading ${ticker}…`}
+          <button
+            type="button"
+            className={`btn-refresh${isRefreshing ? " is-refreshing" : ""}`}
+            title="Refresh balance"
+            aria-label="Refresh balance"
+            disabled={isRefreshing || busy}
+            onClick={() => void refreshBalances()}
+          >
+            ↻
+          </button>
         </div>
 
         <div className="control-group">

@@ -42,6 +42,10 @@ interface WalletContextValue {
   internalBalances: readonly InternalBalance[];
   internalLoaded: boolean;
   refreshInternal: () => Promise<void>;
+  /** Re-fetch both the Odin wallet holding and the canister balances. */
+  refreshBalances: () => Promise<void>;
+  /** True while a manual `refreshBalances` is in flight. */
+  isRefreshing: boolean;
   actor: CanisterActor | null;
   isReady: boolean;
   isConnecting: boolean;
@@ -133,34 +137,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [fundingsCompleted, setFundingsCompleted] = useState(0);
   const [isHouseAdmin, setIsHouseAdmin] = useState(false);
   const [houseBalance, setHouseBalance] = useState<bigint | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ── Wallet holding of the game token (Odin API) ─────────────────────────
   // Only GAME_TOKEN_ID can be deposited, so fetch just that balance
   // (`/user/<principal>/balances?token_in=<id>`) instead of the first page
   // of every holding.
-  useEffect(() => {
+  const refreshWallet = useCallback(async () => {
     if (!connectedUser) {
       setWalletBalance(null);
       return;
     }
-    let cancelled = false;
-    connectedUser
-      .getBalance(GAME_TOKEN_ID)
-      .then((balance) => {
-        if (cancelled) return;
-        setWalletBalance(balance);
-        if (balance) {
-          setTokenInfos((prev) => ({ ...prev, [balance.id]: toTokenInfo(balance) }));
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch wallet balance:", err);
-        if (!cancelled) setWalletBalance(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [connectedUser, depositsCompleted, withdrawalsCompleted, fundingsCompleted]);
+    try {
+      const balance = await connectedUser.getBalance(GAME_TOKEN_ID);
+      setWalletBalance(balance);
+      if (balance) {
+        setTokenInfos((prev) => ({ ...prev, [balance.id]: toTokenInfo(balance) }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch wallet balance:", err);
+      setWalletBalance(null);
+    }
+  }, [connectedUser]);
+
+  useEffect(() => {
+    void refreshWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshWallet, depositsCompleted, withdrawalsCompleted, fundingsCompleted]);
 
   // ── Internal balances (app canister) ───────────────────────────────────
   const refreshInternal = useCallback(async () => {
@@ -182,6 +185,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshInternal();
   }, [refreshInternal]);
+
+  // Manual refresh (button): wallet holding + canister balances together.
+  const refreshBalances = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshWallet(), refreshInternal()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshWallet, refreshInternal]);
 
   // ── Admin check (gates the fund-house UI; the endpoint itself is open) ──
   // Listed in VITE_HOUSE_ADMINS, or the canister owner.
@@ -512,6 +525,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     internalBalances,
     internalLoaded,
     refreshInternal,
+    refreshBalances,
+    isRefreshing,
     actor,
     isReady: status === "ready",
     isConnecting:
