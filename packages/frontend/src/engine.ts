@@ -4,6 +4,7 @@ import {
   LANDING_FRAMES,
   MULTIPLIERS,
   PEG_RADIUS,
+  PERSPECTIVE_TOP_SCALE,
   ROW_FRAMES,
   SPAWN_JITTER_X,
   TRAIL_LENGTH,
@@ -20,6 +21,8 @@ export interface Peg {
   x: number;
   y: number;
   glow: number;
+  /** Perspective size factor at this depth (see `depthScale`). */
+  scale: number;
 }
 
 export interface Slot {
@@ -32,10 +35,57 @@ export interface Slot {
 export interface Layout {
   pegs: Peg[];
   slots: Slot[];
+  /** Horizontal peg spacing at the bottom of the board (depth scale 1). */
   pegSpacingX: number;
-  rowSpacing: number;
+  /** Centre y of each peg row, closer together near the top. */
+  rowYs: number[];
+  /** Depth scale of each peg row. */
+  rowScales: number[];
   topY: number;
   bottomY: number;
+}
+
+interface Frame {
+  topY: number;
+  bottomY: number;
+}
+
+function boardFrame(W: number, H: number): Frame {
+  const s = getScale(W);
+  return { topY: 50 * s, bottomY: H - 60 * s };
+}
+
+/**
+ * Perspective factor for a point `u` of the way down the peg field
+ * (0 = top row depth, 1 = bottom). Linear in `u`, so a tilted plane reads
+ * as the top being farther away.
+ */
+function scaleAt(u: number): number {
+  return PERSPECTIVE_TOP_SCALE + (1 - PERSPECTIVE_TOP_SCALE) * u;
+}
+
+/**
+ * Screen y for depth `u`: rows are spaced in proportion to their scale, so
+ * the integral of `scaleAt` normalised to `[topY, bottomY]`.
+ */
+function yAt(u: number, topY: number, bottomY: number): number {
+  const a = PERSPECTIVE_TOP_SCALE;
+  const cum = a * u + ((1 - a) * u * u) / 2;
+  const total = (1 + a) / 2;
+  return topY + (bottomY - topY) * (cum / total);
+}
+
+/** Perspective size factor for anything drawn at screen `y`. */
+export function depthScale(y: number, W: number, H: number): number {
+  const { topY, bottomY } = boardFrame(W, H);
+  const span = bottomY - topY;
+  if (span <= 0) return 1;
+  // Invert `yAt`: solve ((1-a)/2) u² + a u - f·total = 0 for u in [0, 1].
+  const a = PERSPECTIVE_TOP_SCALE;
+  const f = Math.min(1, Math.max(0, (y - topY) / span)) * ((1 + a) / 2);
+  const half = (1 - a) / 2;
+  const u = half === 0 ? f / a : (-a + Math.sqrt(a * a + 4 * half * f)) / (2 * half);
+  return scaleAt(u);
 }
 
 /** What the canister resolved for one bet; the ball just replays it. */
@@ -101,19 +151,22 @@ export interface Landing {
 export function computeLayout(rows: Rows, risk: Risk, W: number, H: number): Layout {
   const s = getScale(W);
   const padding = 20 * s;
-  const topY = 50 * s;
-  const bottomY = H - 60 * s;
-  const availableH = bottomY - topY;
-  const rowSpacing = availableH / (rows + 1);
+  const { topY, bottomY } = boardFrame(W, H);
   const pegSpacingX = (W - padding * 2) / (rows + 2);
 
+  const rowYs: number[] = [];
+  const rowScales: number[] = [];
   const pegs: Peg[] = [];
   for (let r = 0; r < rows; r++) {
     const pegsInRow = r + 3;
-    const y = topY + (r + 1) * rowSpacing;
+    const u = (r + 1) / (rows + 1);
+    const y = yAt(u, topY, bottomY);
+    const scale = scaleAt(u);
+    rowYs.push(y);
+    rowScales.push(scale);
     for (let c = 0; c < pegsInRow; c++) {
-      const x = W / 2 + (c - (pegsInRow - 1) / 2) * pegSpacingX;
-      pegs.push({ x, y, glow: 0 });
+      const x = W / 2 + (c - (pegsInRow - 1) / 2) * pegSpacingX * scale;
+      pegs.push({ x, y, glow: 0, scale });
     }
   }
 
@@ -130,18 +183,19 @@ export function computeLayout(rows: Rows, risk: Risk, W: number, H: number): Lay
     });
   }
 
-  return { pegs, slots, pegSpacingX, rowSpacing, topY, bottomY };
+  return { pegs, slots, pegSpacingX, rowYs, rowScales, topY, bottomY };
 }
 
 /**
  * Build a ball that replays `spawn.path` on the board. Row `i` has `i + 3`
  * pegs; after `k` right steps the ball sits in the gap at
- * `W/2 + (k - (i+1)/2) * pegSpacingX`, which at the last row is exactly the
- * slot position for slot `k`. So the landing slot is `slotFromPath(path)`.
+ * `W/2 + (k - (i+1)/2) * pegSpacingX * rowScale`. The final waypoint is the
+ * slot for `slotFromPath(path)` at full spacing, so the landing fall also
+ * closes the small perspective gap from the last row.
  */
 export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
   const s = getScale(W);
-  const { pegSpacingX, rowSpacing, topY, bottomY } = computeLayout(
+  const { pegSpacingX, rowYs, rowScales, slots } = computeLayout(
     spawn.rows,
     spawn.risk,
     W,
@@ -158,12 +212,13 @@ export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
     // the row has i + 3 pegs and the ball is at gap `rights` of the row above.
     pegIndexes.push((i * (i + 5)) / 2 + rights + 1);
     if (spawn.path[i]) rights++;
-    const x = W / 2 + (rights - (i + 1) / 2) * pegSpacingX;
-    const y = topY + (i + 1) * rowSpacing + (PEG_RADIUS + BALL_RADIUS) * s;
+    const k = rowScales[i];
+    const x = W / 2 + (rights - (i + 1) / 2) * pegSpacingX * k;
+    const y = rowYs[i] + (PEG_RADIUS + BALL_RADIUS) * s * k;
     points.push({ x, y });
   }
   const slot = slotFromPath(spawn.path);
-  points.push({ x: points[points.length - 1].x, y: bottomY });
+  points.push({ x: slots[slot].x, y: slots[slot].y });
 
   return {
     ...spawn,
@@ -238,7 +293,7 @@ export function updateBalls(
     const t = ball.t;
 
     if (isLanding) {
-      ball.x = to.x;
+      ball.x = from.x + (to.x - from.x) * t;
       ball.y = from.y + (to.y - from.y) * easeIn(t);
     } else {
       // Fall straight onto the peg, then kick sideways into the next gap
@@ -304,24 +359,23 @@ export function draw(
   risk: Risk = "low",
 ): void {
   const s = getScale(W);
-  const pegR = PEG_RADIUS * s;
-  const ballR = BALL_RADIUS * s;
 
   ctx.clearRect(0, 0, W, H);
 
-  // Pegs — neon cyan dots
+  // Pegs — neon cyan dots, larger toward the bottom (tilt perspective)
   for (const peg of animState.pegs) {
     const glowStrength = peg.glow;
+    const pegR = PEG_RADIUS * s * peg.scale;
 
     if (glowStrength > 0) {
       ctx.beginPath();
-      ctx.arc(peg.x, peg.y, pegR + 12 * s, 0, Math.PI * 2);
+      ctx.arc(peg.x, peg.y, pegR + 12 * s * peg.scale, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(188, 19, 254, ${glowStrength * 0.25})`;
       ctx.fill();
     }
 
     ctx.beginPath();
-    ctx.arc(peg.x, peg.y, pegR + glowStrength * 4 * s, 0, Math.PI * 2);
+    ctx.arc(peg.x, peg.y, pegR + glowStrength * 4 * s * peg.scale, 0, Math.PI * 2);
     ctx.fillStyle =
       glowStrength > 0
         ? `rgba(188, 19, 254, ${0.5 + glowStrength * 0.5})`
@@ -435,7 +489,7 @@ export function draw(
       const t = ball.trail[i];
       const progress = i / ball.trail.length;
       const alpha = progress * 0.5;
-      const r = ballR * progress * 0.6;
+      const r = BALL_RADIUS * s * depthScale(t.y, W, H) * progress * 0.6;
       ctx.beginPath();
       ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
@@ -443,9 +497,10 @@ export function draw(
     }
   }
 
-  // Balls — neon glow
+  // Balls — neon glow, scaled with depth like the pegs
   for (const ball of animState.balls) {
     if (!ball.active) continue;
+    const ballR = BALL_RADIUS * s * depthScale(ball.y, W, H);
 
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ballR + 8 * s, 0, Math.PI * 2);

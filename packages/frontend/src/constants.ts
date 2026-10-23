@@ -4,7 +4,7 @@ import { MULTIPLIERS_X100, type Risk, type Rows } from "@plinko/shared";
 export const REF_WIDTH = 700;
 
 // Base values (at REF_WIDTH)
-export const PEG_RADIUS = 5;
+export const PEG_RADIUS = 7;
 export const BALL_RADIUS = 7;
 export const TRAIL_LENGTH = 8;
 
@@ -18,6 +18,13 @@ export const SPAWN_STAGGER_FRAMES = 8;
 export const MAX_FANOUT_FRAMES = 300;
 /** Max sideways offset (at REF_WIDTH) of a ball's start point, so balls of one drop don't stack. */
 export const SPAWN_JITTER_X = 6;
+
+/**
+ * Tilt perspective: the board reads as leaning away at the top. Everything at
+ * the top row (pegs, spacing, ball) is drawn at this fraction of its size at
+ * the bottom row, growing linearly in between. 1 = flat board.
+ */
+export const PERSPECTIVE_TOP_SCALE = 0.62;
 
 /**
  * Frames between successive balls of a `count`-ball drop: the usual stagger

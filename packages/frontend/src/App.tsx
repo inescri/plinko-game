@@ -5,14 +5,15 @@ import PlinkoCanvas, {
 import WalletSection from "./components/WalletSection.tsx";
 import BalanceDisplay from "./components/BalanceDisplay.tsx";
 import BetControls from "./components/BetControls.tsx";
-import RowsSelector from "./components/RowsSelector.tsx";
 import BallCountSelector from "./components/BallCountSelector.tsx";
-import RiskSelector from "./components/RiskSelector.tsx";
+import SettingsButton from "./components/SettingsButton.tsx";
+import SettingsSidebar from "./components/SettingsSidebar.tsx";
 import DropButton from "./components/DropButton.tsx";
 import LastWin from "./components/LastWin.tsx";
 import DepositModal from "./components/DepositModal.tsx";
 import WithdrawModal from "./components/WithdrawModal.tsx";
 import FundHouseModal from "./components/FundHouseModal.tsx";
+import ParallaxBackground from "./components/ParallaxBackground.tsx";
 import { useWallet } from "./contexts/WalletContext.tsx";
 import { usePlay } from "./hooks/usePlay.ts";
 import { GAME_TOKEN_ID } from "./canister/config.ts";
@@ -25,6 +26,7 @@ export default function App() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showFundHouseModal, setShowFundHouseModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const promptedRef = useRef(false);
 
   // Offer a deposit once per session when the player holds none of the game
@@ -66,6 +68,7 @@ export default function App() {
 
   return (
     <div className="container">
+      <ParallaxBackground />
       <h1 className="title">PLINKODIN</h1>
       <div className="top-bar">
         <WalletSection
@@ -76,20 +79,23 @@ export default function App() {
         {connectedUser && (
           <div className="balance-row">
             <BalanceDisplay />
-            <LastWin />
           </div>
         )}
       </div>
       <div className="game-area">
         <PlinkoCanvas ref={canvasRef} />
+        <LastWin />
       </div>
       <div className="bottom-bar">
         <BetControls />
-        <RowsSelector />
         <BallCountSelector />
-        <RiskSelector />
+        <SettingsButton onOpen={() => setShowSettings(true)} />
         <DropButton onDrop={play} disabled={!canPlay} />
       </div>
+      <SettingsSidebar
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
       {showDepositModal && (
         <DepositModal onClose={() => setShowDepositModal(false)} />
       )}

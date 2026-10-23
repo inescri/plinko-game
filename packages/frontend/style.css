@@ -5,24 +5,34 @@
 }
 
 body {
-  background: #05050f;
+  background-color: #05050f;
   color: #e0e0ff;
   font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── Parallax background ── */
+/* Arcade poster behind the game, tinted so the panels stay readable. Taller
+   than the viewport so the parallax shift never exposes the body colour;
+   `ParallaxBackground` moves it with a transform on scroll. */
+.parallax-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 140vh;
+  z-index: -1;
+  pointer-events: none;
   background-image:
-    radial-gradient(
-      ellipse at 50% 0%,
-      rgba(120, 0, 255, 0.12) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse at 50% 100%,
-      rgba(0, 200, 255, 0.08) 0%,
-      transparent 50%
-    );
+    linear-gradient(rgba(5, 5, 15, 0.55), rgba(5, 5, 15, 0.7)),
+    url("/arcade-bg.jpg");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  will-change: transform;
 }
 
 #root {
@@ -98,16 +108,18 @@ body {
 }
 
 .game-area {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(180deg, #0a0a1a 0%, #0d0520 100%);
-  border: 1px solid rgba(188, 19, 254, 0.3);
+  border: 4px solid rgba(188, 19, 254, 0.3);
   border-radius: 16px;
   overflow: hidden;
   width: 100%;
   aspect-ratio: 4 / 3;
   box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
     0 0 15px rgba(188, 19, 254, 0.15),
     inset 0 0 30px rgba(0, 0, 0, 0.5);
 }
@@ -117,6 +129,17 @@ body {
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  /* Translucent panel so the controls stay legible over the arcade poster. */
+  background: rgba(15, 10, 40, 0.75);
+  border: 4px solid rgba(188, 19, 254, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    0 0 15px rgba(188, 19, 254, 0.1),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
 #plinko-canvas {
@@ -135,20 +158,21 @@ body {
 .balance-display {
   flex: 1;
   background: rgba(15, 10, 40, 0.8);
-  border: 1px solid rgba(0, 255, 200, 0.2);
+  border: 4px solid rgba(0, 255, 200, 0.2);
   border-radius: 12px;
   padding: 10px 12px;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 .balance-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: rgba(0, 255, 200, 0.5);
+  color: #9fffe6;
   font-family: "Orbitron", monospace;
 }
 
@@ -170,7 +194,8 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: rgba(188, 19, 254, 0.6);
+  color: #d9b3ff;
+  text-shadow: 0 0 6px rgba(188, 19, 254, 0.5);
   font-family: "Orbitron", monospace;
   font-weight: 400;
 }
@@ -418,37 +443,45 @@ body {
 }
 
 /* ── Last Win ── */
+/* Overlaid on the top of the game area; no box so the board shows through. */
 .last-win {
-  flex: 1;
-  background: rgba(15, 10, 40, 0.8);
-  border: 1px solid rgba(255, 200, 0, 0.2);
-  border-radius: 12px;
-  padding: 10px 12px;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 24px);
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .last-win-label {
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  color: rgba(255, 200, 0, 0.5);
+  letter-spacing: 3px;
+  color: rgba(255, 200, 0, 0.7);
   font-family: "Orbitron", monospace;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
 .last-win-value {
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 700;
   color: #ffc800;
-  text-shadow: 0 0 8px rgba(255, 200, 0, 0.5);
+  text-shadow:
+    0 0 10px rgba(255, 200, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 .last-win-total {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
-  color: rgba(255, 200, 0, 0.8);
+  color: rgba(255, 200, 0, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 /* ── Wallet ── */
@@ -495,11 +528,12 @@ body {
   display: flex;
   align-items: center;
   background: rgba(15, 10, 40, 0.8);
-  border: 1px solid rgba(0, 255, 200, 0.2);
+  border: 4px solid rgba(0, 255, 200, 0.2);
   justify-content: space-between;
   border-radius: 12px;
   padding: 8px 12px;
   gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 .wallet-info {
@@ -562,7 +596,7 @@ body {
 
 .modal {
   background: rgba(15, 10, 40, 0.95);
-  border: 1px solid rgba(188, 19, 254, 0.4);
+  border: 4px solid rgba(188, 19, 254, 0.4);
   border-radius: 16px;
   padding: 24px;
   width: 90%;
@@ -571,6 +605,7 @@ body {
   flex-direction: column;
   gap: 16px;
   box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
     0 0 30px rgba(188, 19, 254, 0.2),
     inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
@@ -713,6 +748,127 @@ body {
   box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
 }
 
+/* ── Settings Button ── */
+.btn-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: "Orbitron", monospace;
+  font-weight: 400;
+  color: rgba(224, 224, 255, 0.85);
+}
+
+.btn-settings-icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #bc13fe;
+  text-shadow: 0 0 8px rgba(188, 19, 254, 0.6);
+  transition: transform 0.4s;
+}
+
+.btn-settings:hover .btn-settings-icon {
+  transform: rotate(60deg);
+}
+
+.risk-text.risk-low {
+  color: #00ff87;
+}
+.risk-text.risk-medium {
+  color: #ffc800;
+}
+.risk-text.risk-high {
+  color: #ff3250;
+}
+
+/* ── Settings Sidebar ── */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.sidebar-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(320px, 85vw);
+  background: rgba(15, 10, 40, 0.97);
+  border-left: 4px solid rgba(188, 19, 254, 0.4);
+  box-shadow:
+    -8px 0 24px rgba(0, 0, 0, 0.55),
+    -10px 0 30px rgba(188, 19, 254, 0.15),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.25s ease-out,
+    visibility 0s linear 0.25s;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition:
+    transform 0.25s ease-out,
+    visibility 0s;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-title {
+  font-family: "Orbitron", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(188, 19, 254, 0.6);
+}
+
+.sidebar-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .container {
@@ -722,6 +878,10 @@ body {
 
   .top-bar {
     gap: 8px;
+  }
+
+  .bottom-bar {
+    padding: 12px;
   }
 
   .title {
