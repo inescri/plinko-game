@@ -13,7 +13,9 @@ export const ROW_FRAMES = 11;
 /** Frames for the final fall from the last row into the slot. */
 export const LANDING_FRAMES = 8;
 /** Frames between successive balls of one multi-ball drop. */
-export const SPAWN_STAGGER_FRAMES = 5;
+export const SPAWN_STAGGER_FRAMES = 8;
+/** Max sideways offset (at REF_WIDTH) of a ball's start point, so balls of one drop don't stack. */
+export const SPAWN_JITTER_X = 6;
 
 /** Returns a scale factor for the given canvas width */
 export function getScale(W: number): number {

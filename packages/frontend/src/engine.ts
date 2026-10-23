@@ -5,6 +5,7 @@ import {
   MULTIPLIERS,
   PEG_RADIUS,
   ROW_FRAMES,
+  SPAWN_JITTER_X,
   TRAIL_LENGTH,
   getScale,
 } from "./constants.ts";
@@ -139,7 +140,10 @@ export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
     W,
     H,
   );
-  const points: Point[] = [{ x: W / 2, y: 20 * s }];
+  // Visual only: a small sideways offset at the start so the balls of one
+  // drop read as separate balls. The first row pulls it back onto the path.
+  const jitter = (Math.random() * 2 - 1) * SPAWN_JITTER_X * s;
+  const points: Point[] = [{ x: W / 2 + jitter, y: 20 * s }];
   const pegIndexes: number[] = [];
   let rights = 0;
   for (let i = 0; i < spawn.rows; i++) {
