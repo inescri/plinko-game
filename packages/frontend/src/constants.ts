@@ -12,6 +12,22 @@ export const TRAIL_LENGTH = 8;
 export const ROW_FRAMES = 11;
 /** Frames for the final fall from the last row into the slot. */
 export const LANDING_FRAMES = 8;
+/** Frames between successive balls of one multi-ball drop (small drops). */
+export const SPAWN_STAGGER_FRAMES = 8;
+/** Longest a drop may take to release all its balls, whatever the count. */
+export const MAX_FANOUT_FRAMES = 300;
+/** Max sideways offset (at REF_WIDTH) of a ball's start point, so balls of one drop don't stack. */
+export const SPAWN_JITTER_X = 6;
+
+/**
+ * Frames between successive balls of a `count`-ball drop: the usual stagger
+ * for small drops, squeezed so a big drop still fans out within
+ * `MAX_FANOUT_FRAMES` (several balls per frame at the cap).
+ */
+export function spawnStaggerFrames(count: number): number {
+  if (count <= 1) return 0;
+  return Math.min(SPAWN_STAGGER_FRAMES, MAX_FANOUT_FRAMES / (count - 1));
+}
 
 /** Returns a scale factor for the given canvas width */
 export function getScale(W: number): number {

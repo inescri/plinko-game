@@ -7,8 +7,16 @@ import {
 } from "react";
 import type { Risk, Rows } from "@plinko/shared";
 import type { TokenInfo } from "../lib/amounts.ts";
+import { clampBallCount, perBallCap } from "../lib/drop.ts";
 
 export type { Risk, Rows };
+
+/** Outcome of one finished drop (every ball of one `playMany` call landed). */
+export interface DropSummary {
+  count: number;
+  totalBet: bigint;
+  totalPayout: bigint;
+}
 
 /**
  * Game state. Every amount is a `bigint` in the token's base units; the
@@ -24,8 +32,13 @@ export interface GameState {
   maxBet: bigint;
   risk: Risk;
   rows: Rows;
+  /** Balls per drop, 1..MAX_BALLS_PER_DROP. `bet` is per ball. */
+  ballCount: number;
+  /** Most recent ball to land. */
   lastWin: { multiplierX100: number; payout: bigint } | null;
-  /** Bets sent to the canister whose result has not arrived yet. */
+  /** Most recent drop whose last ball landed. */
+  lastDrop: DropSummary | null;
+  /** Drops sent to the canister whose result has not arrived yet. */
   inFlight: number;
   playError: string | null;
 }
@@ -37,7 +50,10 @@ export type GameAction =
   | { type: "SET_MAX_BET"; payload: bigint }
   | { type: "SET_RISK"; payload: Risk }
   | { type: "SET_ROWS"; payload: Rows }
+  | { type: "SET_BALL_COUNT"; payload: number }
   | { type: "SET_LAST_WIN"; payload: GameState["lastWin"] }
+  | { type: "SET_LAST_DROP"; payload: DropSummary }
+  /** `payload` is the whole stake of the drop (bet × ballCount). */
   | { type: "BET_STARTED"; payload: bigint }
   | { type: "BET_SETTLED"; payload: bigint }
   | { type: "BET_FAILED"; payload: { bet: bigint; error: string } }
@@ -53,7 +69,9 @@ const initialState: GameState = {
   maxBet: 0n,
   risk: "low",
   rows: 14,
+  ballCount: 1,
   lastWin: null,
+  lastDrop: null,
   inFlight: 0,
   playError: null,
 };
@@ -69,6 +87,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         bet: 0n,
         maxBet: 0n,
         lastWin: null,
+        lastDrop: null,
         playError: null,
       };
     case "SET_BALANCE":
@@ -81,13 +100,33 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, risk: action.payload };
     case "SET_ROWS":
       return { ...state, rows: action.payload };
+    case "SET_BALL_COUNT": {
+      if (!Number.isFinite(action.payload)) return state;
+      const ballCount = clampBallCount(action.payload);
+      // More balls shrink the per-ball cap (balance and house limit are
+      // shared by the whole drop); pull the bet down so Drop stays enabled.
+      // A zero cap means the balance or house limit is not known yet (or
+      // nothing is affordable): leave the bet alone rather than zero it, as
+      // nothing would put it back once the real limit arrives.
+      const cap = perBallCap(state.balance, state.maxBet, ballCount);
+      return {
+        ...state,
+        ballCount,
+        bet: cap > 0n && state.bet > cap ? cap : state.bet,
+      };
+    }
     case "SET_LAST_WIN":
       return { ...state, lastWin: action.payload };
+    case "SET_LAST_DROP":
+      return { ...state, lastDrop: action.payload };
     case "BET_STARTED":
+      // A new drop is on its way: drop the previous tally so it is not read
+      // as the running total of the balls about to land.
       return {
         ...state,
         balance: state.balance - action.payload,
         inFlight: state.inFlight + 1,
+        lastDrop: null,
         playError: null,
       };
     case "BET_SETTLED":

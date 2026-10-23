@@ -125,3 +125,39 @@ export function maxBetForHouse(house: bigint, risk: Risk, rows: Rows): bigint {
   if (top <= MULT_SCALE) return 0n;
   return (house * MULT_SCALE) / (top - MULT_SCALE);
 }
+
+// ── Multi-ball drops ────────────────────────────────────────────────────
+
+/**
+ * Most balls one `playMany` call may drop. Shared so the canister (which
+ * enforces it) and the frontend (which offers the selector) agree. Raise here
+ * to allow bigger drops; the Candid count is a `Nat16`, so anything below
+ * 65536 needs no interface change.
+ */
+export const MAX_BALLS_PER_DROP = 1000;
+
+export function isBallCount(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= MAX_BALLS_PER_DROP
+  );
+}
+
+/**
+ * Worst-case house loss for `count` balls at the same bet: every ball lands
+ * in a top slot. The per-ball cap for a bankroll is therefore
+ * `maxBetForHouse(house, risk, rows) / count` (floor of a floor is the floor).
+ */
+export function houseExposureMany(
+  bet: bigint,
+  risk: Risk,
+  rows: Rows,
+  count: number,
+): bigint {
+  if (!isBallCount(count)) {
+    throw new Error(`count must be between 1 and ${MAX_BALLS_PER_DROP}`);
+  }
+  return houseExposure(bet, risk, rows) * BigInt(count);
+}

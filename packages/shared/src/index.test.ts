@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_BALLS_PER_DROP,
   MULTIPLIERS_X100,
   RISKS,
   ROWS,
   houseExposure,
+  houseExposureMany,
+  isBallCount,
   maxBetForHouse,
   maxMultiplierX100,
   multiplierX100,
@@ -91,5 +94,43 @@ describe("house limits", () => {
       }
     }
     expect(maxBetForHouse(0n, "high", 16)).toBe(0n);
+  });
+});
+
+describe("multi-ball drops", () => {
+  it("isBallCount accepts 1..MAX_BALLS_PER_DROP integers only", () => {
+    expect(MAX_BALLS_PER_DROP).toBeGreaterThanOrEqual(10);
+    expect(isBallCount(1)).toBe(true);
+    expect(isBallCount(MAX_BALLS_PER_DROP)).toBe(true);
+    expect(isBallCount(0)).toBe(false);
+    expect(isBallCount(MAX_BALLS_PER_DROP + 1)).toBe(false);
+    expect(isBallCount(1.5)).toBe(false);
+    expect(isBallCount("3")).toBe(false);
+  });
+  it("houseExposureMany is count times the single exposure", () => {
+    expect(houseExposureMany(100n, "high", 16, 3)).toBe(
+      houseExposure(100n, "high", 16) * 3n,
+    );
+    expect(houseExposureMany(100n, "low", 8, 1)).toBe(500n);
+    expect(() => houseExposureMany(100n, "low", 8, 0)).toThrow(/count/);
+    expect(() =>
+      houseExposureMany(100n, "low", 8, MAX_BALLS_PER_DROP + 1),
+    ).toThrow(/count/);
+  });
+  it("maxBetForHouse / count stays within the bankroll for count balls", () => {
+    const house = 1_000_000n;
+    for (const risk of RISKS) {
+      for (const rows of ROWS) {
+        for (const count of [1, 2, 3, 7, MAX_BALLS_PER_DROP]) {
+          const perBall = maxBetForHouse(house, risk, rows) / BigInt(count);
+          expect(houseExposureMany(perBall, risk, rows, count)).toBeLessThanOrEqual(
+            house,
+          );
+          expect(
+            houseExposureMany(perBall + 1n, risk, rows, count),
+          ).toBeGreaterThan(house);
+        }
+      }
+    }
   });
 });

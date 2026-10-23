@@ -8,7 +8,7 @@ import {
 import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
 import {
   computeLayout,
-  createBall,
+  queueBall,
   draw,
   updateBalls,
   type AnimationState,
@@ -22,9 +22,24 @@ interface Dimensions {
   H: number;
 }
 
+/** One resolved `playMany` call: every ball shares `dropId`. */
+export interface DropSpawn {
+  dropId: number;
+  totalBet: bigint;
+  balls: BallSpawn[];
+}
+
 export interface PlinkoCanvasRef {
-  /** Animate a bet the canister already resolved. */
-  spawnBall: (spawn: BallSpawn) => void;
+  /** Animate a drop the canister already resolved. */
+  spawnDrop: (drop: DropSpawn) => void;
+}
+
+/** Balls of a drop still falling, and the tally so far. */
+interface PendingDrop {
+  remaining: number;
+  count: number;
+  totalBet: bigint;
+  totalPayout: bigint;
 }
 
 const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
@@ -33,6 +48,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   const dispatch = useGameDispatch();
 
   const animRef = useRef<AnimationState>({
+    pending: [],
     balls: [],
     pegs: [],
     slots: [],
@@ -57,13 +73,47 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   const dispatchRef = useRef<Dispatch<GameAction>>(dispatch);
   dispatchRef.current = dispatch;
 
-  const spawnBall = useRef((spawn: BallSpawn) => {
-    const { W, H } = dimsRef.current;
-    if (W <= 0 || H <= 0) return;
-    animRef.current.balls.push(createBall(spawn, W, H));
+  const dropsRef = useRef(new Map<number, PendingDrop>());
+
+  /** Publish a finished drop's tally. */
+  const reportDrop = useRef((pending: PendingDrop) => {
+    dispatchRef.current({
+      type: "SET_LAST_DROP",
+      payload: {
+        count: pending.count,
+        totalBet: pending.totalBet,
+        totalPayout: pending.totalPayout,
+      },
+    });
   }).current;
 
-  useImperativeHandle(ref, () => ({ spawnBall }), [spawnBall]);
+  const spawnDrop = useRef((drop: DropSpawn) => {
+    if (drop.balls.length === 0) return;
+    const { W, H } = dimsRef.current;
+    const pending: PendingDrop = {
+      remaining: drop.balls.length,
+      count: drop.balls.length,
+      totalBet: drop.totalBet,
+      totalPayout: drop.balls.reduce((sum, b) => sum + b.payout, 0n),
+    };
+    if (W <= 0 || H <= 0) {
+      // Nothing to animate on, but the result is settled: still report it,
+      // last ball included, so the player sees why the balance moved.
+      const last = drop.balls[drop.balls.length - 1];
+      dispatchRef.current({
+        type: "SET_LAST_WIN",
+        payload: { multiplierX100: last.multiplierX100, payout: last.payout },
+      });
+      reportDrop(pending);
+      return;
+    }
+    dropsRef.current.set(drop.dropId, pending);
+    for (const spawn of drop.balls) {
+      queueBall(animRef.current, spawn);
+    }
+  }).current;
+
+  useImperativeHandle(ref, () => ({ spawnDrop }), [spawnDrop]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -96,16 +146,34 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
     function loop() {
       if (!ctx) return;
       const { W, H } = dimsRef.current;
-      const { landings, pegHits } = updateBalls(animRef.current, W);
+      const { landings, pegHits } = updateBalls(animRef.current, W, H);
 
       if (pegHits > 0) playPegHit();
 
-      for (const { multiplierX100, payout } of landings) {
+      // Big drops land several balls per frame: report once per frame (the
+      // last ball, and the loudest sound) instead of once per ball, so the
+      // reducer and the audio graph are not hit hundreds of times a second.
+      if (landings.length > 0) {
+        const last = landings[landings.length - 1];
         dispatchRef.current({
           type: "SET_LAST_WIN",
-          payload: { multiplierX100, payout },
+          payload: { multiplierX100: last.multiplierX100, payout: last.payout },
         });
-        playLanding(multiplierX100 / 100);
+        let loudest = 0;
+        for (const l of landings) {
+          if (l.multiplierX100 > loudest) loudest = l.multiplierX100;
+        }
+        playLanding(loudest / 100);
+
+        for (const { dropId } of landings) {
+          const pending = dropsRef.current.get(dropId);
+          if (!pending) continue;
+          pending.remaining--;
+          if (pending.remaining <= 0) {
+            dropsRef.current.delete(dropId);
+            reportDrop(pending);
+          }
+        }
       }
 
       draw(ctx, animRef.current, W, H, tableRef.current.risk);

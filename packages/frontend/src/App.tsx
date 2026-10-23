@@ -6,6 +6,7 @@ import WalletSection from "./components/WalletSection.tsx";
 import BalanceDisplay from "./components/BalanceDisplay.tsx";
 import BetControls from "./components/BetControls.tsx";
 import RowsSelector from "./components/RowsSelector.tsx";
+import BallCountSelector from "./components/BallCountSelector.tsx";
 import RiskSelector from "./components/RiskSelector.tsx";
 import DropButton from "./components/DropButton.tsx";
 import LastWin from "./components/LastWin.tsx";
@@ -46,10 +47,10 @@ export default function App() {
     }
   }, [connectedUser, internalLoaded, internalBalances, request]);
 
-  // Keyboard shortcut: Space to drop ball. Skipped when a form control has
+  // Keyboard shortcut: Space to drop (one drop = `ballCount` balls). Skipped when a form control has
   // focus: inputs/selects use Space themselves, and a focused button fires
   // its own click on Space, which would be a second `play()` for one press.
-  // Auto-repeat from a held key is ignored so one press is one bet.
+  // Auto-repeat from a held key is ignored so one press is one drop.
   useEffect(() => {
     const ownsSpace = new Set(["INPUT", "SELECT", "TEXTAREA", "BUTTON"]);
     function onKeyDown(e: KeyboardEvent) {
@@ -85,6 +86,7 @@ export default function App() {
       <div className="bottom-bar">
         <BetControls />
         <RowsSelector />
+        <BallCountSelector />
         <RiskSelector />
         <DropButton onDrop={play} disabled={!canPlay} />
       </div>

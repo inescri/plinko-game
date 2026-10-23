@@ -15,16 +15,18 @@ import { Principal } from '@dfinity/principal';
 import {
     type Risk,
     type Rows,
+    isBallCount,
     isRisk,
     isRows,
+    MAX_BALLS_PER_DROP,
     maxBetForHouse,
 } from '@plinko/shared';
 
 import {
     HOUSE_OWNER,
-    houseExposure,
-    randomBytesFor,
-    resolveBet,
+    houseExposureMany,
+    randomBytesForMany,
+    resolveBets,
 } from './game';
 
 import {
@@ -93,6 +95,36 @@ interface PlayResultValue {
     slot: number;
     multiplier_x100: number;
     payout: bigint;
+    balance: bigint;
+}
+
+/** Candid shape of one ball inside a `playMany` result. */
+const BetOutcomeRecord = IDL.Record({
+    path: IDL.Vec(IDL.Bool),
+    slot: IDL.Nat8,
+    multiplier_x100: IDL.Nat32,
+    payout: IDL.Nat,
+});
+
+/** Candid shape of a resolved multi-ball drop, returned by `playMany`. */
+const PlayManyResult = IDL.Record({
+    outcomes: IDL.Vec(BetOutcomeRecord),
+    total_bet: IDL.Nat,
+    total_payout: IDL.Nat,
+    balance: IDL.Nat,
+});
+
+interface BetOutcomeValue {
+    path: boolean[];
+    slot: number;
+    multiplier_x100: number;
+    payout: bigint;
+}
+
+interface PlayManyResultValue {
+    outcomes: BetOutcomeValue[];
+    total_bet: bigint;
+    total_payout: bigint;
     balance: bigint;
 }
 
@@ -303,15 +335,11 @@ export default class {
     /**
      * Resolve one Plinko bet for the caller, entirely on-chain.
      *
-     * ⚠️ AI-GUARD: Every effect here is synchronous — there is NO await between
-     * the debit and the payout credit, so a bet is atomic and cannot be
-     * reentered. Randomness comes from `crypto.getRandomValues`, which Azle
-     * seeds from `raw_rand` (and this canister reseeds on a timer). Do not
-     * introduce an inter-canister call into this method.
+     * A one-ball drop: delegates to `playMany` so there is exactly one
+     * hardened settle path (debit → draw → credit) to audit and maintain.
+     * The Candid shape is the single-ball one callers have always had.
      *
-     * Solvency: the house must already hold the worst-case loss for this bet
-     * (`houseExposure`), so every payout the ledger credits is backed by funds
-     * the canister actually holds (bankroll + bets).
+     * ⚠️ AI-GUARD: keep this a thin synchronous wrapper; see `playMany`.
      */
     @update([IDL.Text, IDL.Nat, IDL.Nat8, IDL.Text], PlayResult)
     play(
@@ -320,6 +348,41 @@ export default class {
         rows: number,
         risk: string,
     ): PlayResultValue {
+        const drop = this.playMany(tokenId, bet, rows, risk, 1);
+        const outcome = drop.outcomes[0];
+        return {
+            path: outcome.path,
+            slot: outcome.slot,
+            multiplier_x100: outcome.multiplier_x100,
+            payout: outcome.payout,
+            balance: drop.balance,
+        };
+    }
+
+    /**
+     * Resolve `count` Plinko balls at the same bet in one call, entirely
+     * on-chain. The whole stake is debited once, every path is drawn, and
+     * the summed payout is credited once. `play` is a one-ball wrapper
+     * around this method; it is the only settle path.
+     *
+     * ⚠️ AI-GUARD: Every effect here is synchronous — there is NO await between
+     * the debit and the payout credit, so a drop is atomic and cannot be
+     * reentered. Randomness comes from `crypto.getRandomValues`, which Azle
+     * seeds from `raw_rand` (and this canister reseeds on a timer). Do not
+     * introduce an inter-canister call into this method.
+     *
+     * Solvency: the house must already hold the worst-case loss for ALL balls
+     * (`houseExposureMany`: every ball in a top slot), so the summed payout
+     * the ledger credits is backed by funds the canister actually holds.
+     */
+    @update([IDL.Text, IDL.Nat, IDL.Nat8, IDL.Text, IDL.Nat16], PlayManyResult)
+    playMany(
+        tokenId: string,
+        bet: bigint,
+        rows: number,
+        risk: string,
+        count: number,
+    ): PlayManyResultValue {
         validateAmount(bet);
         if (!isRows(rows)) {
             throw new Error('rows must be one of 8, 10, 12, 14, 16');
@@ -327,37 +390,54 @@ export default class {
         if (!isRisk(risk)) {
             throw new Error('risk must be low, medium or high');
         }
+        if (!isBallCount(count)) {
+            throw new Error(
+                `count must be between 1 and ${MAX_BALLS_PER_DROP}`,
+            );
+        }
+        const totalBet = bet * BigInt(count);
+        validateAmount(totalBet);
 
         const caller = msgCaller();
         const callerKey = makeKey(caller.toText(), tokenId);
         const houseKey = makeKey(HOUSE_OWNER, tokenId);
 
-        // CHECK: the caller can afford the bet and the house can afford the
-        // top payout.
+        // CHECK: the caller can afford every ball and the house can afford
+        // the top payout on every ball.
         const current = this.ledger.get(callerKey) ?? 0n;
-        const afterBet = debit(current, bet); // throws on insufficient funds
+        const afterBet = debit(current, totalBet); // throws on insufficient funds
         const house = this.ledger.get(houseKey) ?? 0n;
-        if (houseExposure(bet, risk, rows) > house) {
+        if (houseExposureMany(bet, risk, rows, count) > house) {
             throw new Error('bet exceeds house limit');
         }
 
-        // DRAW: one random bit per row.
-        const bytes = new Uint8Array(randomBytesFor(rows));
+        // DRAW: one random bit per row per ball, each ball its own slice.
+        const bytes = new Uint8Array(randomBytesForMany(rows, count));
         crypto.getRandomValues(bytes);
-        const outcome = resolveBet(bet, rows, risk, bytes);
+        const { outcomes, totalPayout } = resolveBets(
+            bet,
+            rows,
+            risk,
+            count,
+            bytes,
+        );
 
         // EFFECT: settle both sides before returning. `credit` rejects a zero
         // amount, so a total loss leaves the post-bet balance as is.
         const balance =
-            outcome.payout > 0n ? credit(afterBet, outcome.payout) : afterBet;
+            totalPayout > 0n ? credit(afterBet, totalPayout) : afterBet;
         this.ledger.insert(callerKey, balance);
-        this.ledger.insert(houseKey, house + bet - outcome.payout);
+        this.ledger.insert(houseKey, house + totalBet - totalPayout);
 
         return {
-            path: outcome.path,
-            slot: outcome.slot,
-            multiplier_x100: outcome.multiplierX100,
-            payout: outcome.payout,
+            outcomes: outcomes.map((o) => ({
+                path: o.path,
+                slot: o.slot,
+                multiplier_x100: o.multiplierX100,
+                payout: o.payout,
+            })),
+            total_bet: totalBet,
+            total_payout: totalPayout,
             balance,
         };
     }

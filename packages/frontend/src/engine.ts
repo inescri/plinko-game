@@ -5,6 +5,7 @@ import {
   MULTIPLIERS,
   PEG_RADIUS,
   ROW_FRAMES,
+  SPAWN_JITTER_X,
   TRAIL_LENGTH,
   getScale,
 } from "./constants.ts";
@@ -44,11 +45,22 @@ export interface BallSpawn {
   risk: Risk;
   multiplierX100: number;
   payout: bigint;
+  /** Which drop (one `playMany` call) this ball belongs to. */
+  dropId: number;
+  /** Frames to wait before the ball appears, so a drop fans out. */
+  delayFrames: number;
 }
 
 interface Point {
   x: number;
   y: number;
+}
+
+/** A ball waiting to be released; its geometry is built when it appears. */
+export interface PendingBall {
+  spawn: BallSpawn;
+  /** Remaining frames before the ball appears. */
+  delay: number;
 }
 
 export interface Ball extends BallSpawn {
@@ -71,6 +83,8 @@ export interface SlotFlash {
 }
 
 export interface AnimationState {
+  /** Balls not yet released; `createBall` runs on release so they always use the current layout. */
+  pending: PendingBall[];
   balls: Ball[];
   pegs: Peg[];
   slots: Slot[];
@@ -78,6 +92,7 @@ export interface AnimationState {
 }
 
 export interface Landing {
+  dropId: number;
   slot: number;
   multiplierX100: number;
   payout: bigint;
@@ -132,7 +147,10 @@ export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
     W,
     H,
   );
-  const points: Point[] = [{ x: W / 2, y: 20 * s }];
+  // Visual only: a small sideways offset at the start so the balls of one
+  // drop read as separate balls. The first row pulls it back onto the path.
+  const jitter = (Math.random() * 2 - 1) * SPAWN_JITTER_X * s;
+  const points: Point[] = [{ x: W / 2 + jitter, y: 20 * s }];
   const pegIndexes: number[] = [];
   let rights = 0;
   for (let i = 0; i < spawn.rows; i++) {
@@ -161,6 +179,14 @@ export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
   };
 }
 
+/** Queue a ball; it is built against the live layout once its delay elapses. */
+export function queueBall(animState: AnimationState, spawn: BallSpawn): void {
+  animState.pending.push({
+    spawn,
+    delay: Math.max(0, Math.floor(spawn.delayFrames)),
+  });
+}
+
 function easeIn(t: number): number {
   return t * t;
 }
@@ -176,10 +202,26 @@ const BOUNCE_AT = 0.45;
 export function updateBalls(
   animState: AnimationState,
   W: number,
+  H: number,
 ): { landings: Landing[]; pegHits: number } {
   const s = getScale(W);
   const landings: Landing[] = [];
   let pegHits = 0;
+
+  // Release due balls. Geometry is computed here, not at spawn time, so a
+  // resize or table change while a drop is still fanning out is honoured.
+  if (animState.pending.length > 0) {
+    const still: PendingBall[] = [];
+    for (const p of animState.pending) {
+      if (p.delay <= 0) {
+        animState.balls.push(createBall(p.spawn, W, H));
+      } else {
+        p.delay--;
+        still.push(p);
+      }
+    }
+    animState.pending = still;
+  }
 
   for (const ball of animState.balls) {
     if (!ball.active) continue;
@@ -222,6 +264,7 @@ export function updateBalls(
       if (ball.segment >= ball.points.length - 1) {
         ball.active = false;
         landings.push({
+          dropId: ball.dropId,
           slot: ball.slot,
           multiplierX100: ball.multiplierX100,
           payout: ball.payout,

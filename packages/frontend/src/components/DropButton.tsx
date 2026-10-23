@@ -6,7 +6,8 @@ interface DropButtonProps {
 }
 
 export default function DropButton({ onDrop, disabled }: DropButtonProps) {
-  const { risk, inFlight, playError } = useGameState();
+  const { risk, inFlight, playError, ballCount } = useGameState();
+  const idle = ballCount > 1 ? `Drop ${ballCount} Balls` : "Drop Ball";
 
   return (
     <div className="control-group">
@@ -15,7 +16,7 @@ export default function DropButton({ onDrop, disabled }: DropButtonProps) {
         onClick={onDrop}
         disabled={disabled}
       >
-        {inFlight > 0 ? `Dropping… (${inFlight})` : "Drop Ball"}
+        {inFlight > 0 ? `Dropping… (${inFlight})` : idle}
       </button>
       {playError && <div className="deposit-error">{playError}</div>}
     </div>
