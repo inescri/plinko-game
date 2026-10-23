@@ -717,6 +717,126 @@ body {
   box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
 }
 
+/* ── Settings Button ── */
+.btn-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: "Orbitron", monospace;
+  font-weight: 400;
+  color: rgba(224, 224, 255, 0.85);
+}
+
+.btn-settings-icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #bc13fe;
+  text-shadow: 0 0 8px rgba(188, 19, 254, 0.6);
+  transition: transform 0.4s;
+}
+
+.btn-settings:hover .btn-settings-icon {
+  transform: rotate(60deg);
+}
+
+.risk-text.risk-low {
+  color: #00ff87;
+}
+.risk-text.risk-medium {
+  color: #ffc800;
+}
+.risk-text.risk-high {
+  color: #ff3250;
+}
+
+/* ── Settings Sidebar ── */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.sidebar-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(320px, 85vw);
+  background: rgba(15, 10, 40, 0.97);
+  border-left: 1px solid rgba(188, 19, 254, 0.4);
+  box-shadow:
+    -10px 0 30px rgba(188, 19, 254, 0.15),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.25s ease-out,
+    visibility 0s linear 0.25s;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition:
+    transform 0.25s ease-out,
+    visibility 0s;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-title {
+  font-family: "Orbitron", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(188, 19, 254, 0.6);
+}
+
+.sidebar-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .container {
