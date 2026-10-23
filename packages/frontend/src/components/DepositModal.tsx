@@ -24,6 +24,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
     depositsCompleted,
     refreshBalances,
     isRefreshing,
+    refreshError,
   } = useWallet();
 
   const [amount, setAmount] = useState("");
@@ -38,7 +39,7 @@ export default function DepositModal({ onClose }: DepositModalProps) {
   const token = getTokenInfo(GAME_TOKEN_ID);
   const ticker = token?.ticker ?? GAME_TOKEN_ID.toUpperCase();
   const busy = flowStage !== "idle";
-  const error = localError ?? flowError;
+  const error = localError ?? flowError ?? refreshError;
   const walletBalance = getWalletBalance();
   const numAmount = Number(amount);
   const invalid = !token || numAmount <= 0 || numAmount > walletBalance;

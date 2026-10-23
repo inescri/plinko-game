@@ -4,7 +4,7 @@ import { formatFixed, placesOf } from "../lib/amounts.ts";
 
 export default function BalanceDisplay() {
   const { balance, token, inFlight } = useGameState();
-  const { refreshBalances, isRefreshing } = useWallet();
+  const { connectedUser, refreshBalances, isRefreshing, refreshError } = useWallet();
 
   const formatted = token ? formatFixed(balance, placesOf(token)) : "0.00";
   // Don't refetch mid-drop: the mirrored balance is frozen while a bet is pending.
@@ -16,17 +16,20 @@ export default function BalanceDisplay() {
       <span className="balance-value">
         {formatted}
         {token ? ` ${token.ticker}` : ""}
-        <button
-          type="button"
-          className={`btn-refresh${isRefreshing ? " is-refreshing" : ""}`}
-          title="Refresh balance"
-          aria-label="Refresh balance"
-          disabled={disabled}
-          onClick={() => void refreshBalances()}
-        >
-          ↻
-        </button>
+        {connectedUser && (
+          <button
+            type="button"
+            className={`btn-refresh${isRefreshing ? " is-refreshing" : ""}`}
+            title="Refresh balance"
+            aria-label="Refresh balance"
+            disabled={disabled}
+            onClick={() => void refreshBalances()}
+          >
+            ↻
+          </button>
+        )}
       </span>
+      {refreshError && <div className="deposit-error">{refreshError}</div>}
     </div>
   );
 }
