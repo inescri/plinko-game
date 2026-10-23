@@ -120,12 +120,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "SET_LAST_DROP":
       return { ...state, lastDrop: action.payload };
     case "BET_STARTED":
-      // A new drop is on its way: drop the previous tally so it is not read
-      // as the running total of the balls about to land.
+      // A new drop is on its way: clear the previous result so it is not
+      // read as belonging to the balls about to land.
       return {
         ...state,
         balance: state.balance - action.payload,
         inFlight: state.inFlight + 1,
+        lastWin: null,
         lastDrop: null,
         playError: null,
       };
