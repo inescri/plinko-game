@@ -42,6 +42,12 @@ interface WalletContextValue {
   internalBalances: readonly InternalBalance[];
   internalLoaded: boolean;
   refreshInternal: () => Promise<void>;
+  /** Re-fetch both the Odin wallet holding and the canister balances. */
+  refreshBalances: () => Promise<void>;
+  /** True while a manual `refreshBalances` is in flight. */
+  isRefreshing: boolean;
+  /** Set when the last manual `refreshBalances` could not reach a source. */
+  refreshError: string | null;
   actor: CanisterActor | null;
   isReady: boolean;
   isConnecting: boolean;
@@ -133,55 +139,94 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [fundingsCompleted, setFundingsCompleted] = useState(0);
   const [isHouseAdmin, setIsHouseAdmin] = useState(false);
   const [houseBalance, setHouseBalance] = useState<bigint | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  // Bumped by a manual refresh so the house-bankroll and max-bet effects
+  // refetch too.
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  // Each fetch takes a sequence number; only the latest one may write, so a
+  // slow response from an older call (or a previous session) is dropped.
+  const walletSeq = useRef(0);
+  const internalSeq = useRef(0);
 
   // ── Wallet holding of the game token (Odin API) ─────────────────────────
   // Only GAME_TOKEN_ID can be deposited, so fetch just that balance
   // (`/user/<principal>/balances?token_in=<id>`) instead of the first page
-  // of every holding.
-  useEffect(() => {
+  // of every holding. Resolves false when the fetch failed; the last known
+  // balance is kept in that case.
+  const loadWallet = useCallback(async (): Promise<boolean> => {
+    const seq = ++walletSeq.current;
     if (!connectedUser) {
       setWalletBalance(null);
-      return;
+      return true;
     }
-    let cancelled = false;
-    connectedUser
-      .getBalance(GAME_TOKEN_ID)
-      .then((balance) => {
-        if (cancelled) return;
-        setWalletBalance(balance);
-        if (balance) {
-          setTokenInfos((prev) => ({ ...prev, [balance.id]: toTokenInfo(balance) }));
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch wallet balance:", err);
-        if (!cancelled) setWalletBalance(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [connectedUser, depositsCompleted, withdrawalsCompleted, fundingsCompleted]);
+    try {
+      const balance = await connectedUser.getBalance(GAME_TOKEN_ID);
+      if (seq !== walletSeq.current) return true;
+      setWalletBalance(balance);
+      if (balance) {
+        setTokenInfos((prev) => ({ ...prev, [balance.id]: toTokenInfo(balance) }));
+      }
+      return true;
+    } catch (err) {
+      console.error("Failed to fetch wallet balance:", err);
+      return seq !== walletSeq.current;
+    }
+  }, [connectedUser]);
+
+  // A new session must not show the previous one's holding while it loads.
+  useEffect(() => {
+    setWalletBalance(null);
+    setRefreshError(null);
+  }, [connectedUser]);
+
+  useEffect(() => {
+    void loadWallet();
+  }, [loadWallet, depositsCompleted, withdrawalsCompleted, fundingsCompleted]);
 
   // ── Internal balances (app canister) ───────────────────────────────────
-  const refreshInternal = useCallback(async () => {
+  const loadInternal = useCallback(async (): Promise<boolean> => {
+    const seq = ++internalSeq.current;
     if (!actor) {
       setInternalBalances([]);
       setInternalLoaded(false);
-      return;
+      return true;
     }
     try {
       const entries = await actor.getBalances();
+      if (seq !== internalSeq.current) return true;
       setInternalBalances(entries.map(([token, amount]) => ({ token, amount })));
+      return true;
     } catch (err) {
       console.error("Failed to fetch internal balances:", err);
+      return seq !== internalSeq.current;
     } finally {
-      setInternalLoaded(true);
+      if (seq === internalSeq.current) setInternalLoaded(true);
     }
   }, [actor]);
 
+  const refreshInternal = useCallback(async (): Promise<void> => {
+    await loadInternal();
+  }, [loadInternal]);
+
   useEffect(() => {
-    void refreshInternal();
-  }, [refreshInternal]);
+    void loadInternal();
+  }, [loadInternal]);
+
+  // Manual refresh (button): wallet holding + canister balances together,
+  // plus the house bankroll and max bet via `refreshNonce`.
+  const refreshBalances = useCallback(async (): Promise<void> => {
+    if (!connectedUser) return;
+    setIsRefreshing(true);
+    setRefreshError(null);
+    setRefreshNonce((n) => n + 1);
+    try {
+      const [walletOk, internalOk] = await Promise.all([loadWallet(), loadInternal()]);
+      if (!walletOk || !internalOk) setRefreshError("Could not refresh balances");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [connectedUser, loadWallet, loadInternal]);
 
   // ── Admin check (gates the fund-house UI; the endpoint itself is open) ──
   // Listed in VITE_HOUSE_ADMINS, or the canister owner.
@@ -228,7 +273,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [actor, fundingsCompleted, game.inFlight]);
+  }, [actor, fundingsCompleted, game.inFlight, refreshNonce]);
 
   // Resolve metadata for the game token (needed before any deposit) and for
   // internally held tokens the wallet no longer lists.
@@ -310,7 +355,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [actor, gameTokenId, game.rows, game.risk, game.inFlight, dispatch]);
+  }, [actor, gameTokenId, game.rows, game.risk, game.inFlight, refreshNonce, dispatch]);
 
   // Clear the game when the session ends.
   useEffect(() => {
@@ -512,6 +557,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     internalBalances,
     internalLoaded,
     refreshInternal,
+    refreshBalances,
+    isRefreshing,
+    refreshError,
     actor,
     isReady: status === "ready",
     isConnecting:

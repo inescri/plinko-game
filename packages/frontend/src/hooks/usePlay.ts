@@ -23,16 +23,18 @@ let nextDropId = 1;
 export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
   const game = useGameState();
   const dispatch = useGameDispatch();
-  const { actor, refreshInternal } = useWallet();
+  const { actor, refreshInternal, isRefreshing } = useWallet();
 
   // Latest values for the keyboard shortcut (no stale closure).
-  const latest = useRef({ game, actor });
-  latest.current = { game, actor };
+  const latest = useRef({ game, actor, isRefreshing });
+  latest.current = { game, actor, isRefreshing };
 
   const play = useCallback(() => {
-    const { game, actor } = latest.current;
+    const { game, actor, isRefreshing } = latest.current;
     const { token, bet, balance, maxBet, rows, risk, ballCount } = game;
-    if (!token || !actor) return;
+    // A refresh landing mid-drop would be skipped by the balance mirror, so
+    // wait for it to finish before betting.
+    if (!token || !actor || isRefreshing) return;
     if (!canAffordDrop(bet, ballCount, balance, maxBet)) return;
 
     const totalBet = bet * BigInt(ballCount);
@@ -76,6 +78,7 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
   const canPlay =
     game.token !== null &&
     actor !== null &&
+    !isRefreshing &&
     canAffordDrop(game.bet, game.ballCount, game.balance, game.maxBet);
 
   return { play, canPlay };
