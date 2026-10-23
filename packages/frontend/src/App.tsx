@@ -77,12 +77,12 @@ export default function App() {
         {connectedUser && (
           <div className="balance-row">
             <BalanceDisplay />
-            <LastWin />
           </div>
         )}
       </div>
       <div className="game-area">
         <PlinkoCanvas ref={canvasRef} />
+        <LastWin />
       </div>
       <div className="bottom-bar">
         <BetControls />
