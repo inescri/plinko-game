@@ -3,6 +3,7 @@ import { useGameDispatch, useGameState } from "../contexts/GameContext.tsx";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { playLaunch } from "../sounds.js";
 import { spawnStaggerFrames } from "../constants.ts";
+import { canAffordDrop } from "../lib/drop.ts";
 import type { PlinkoCanvasRef } from "../components/PlinkoCanvas.tsx";
 
 /**
@@ -15,22 +16,6 @@ import type { PlinkoCanvasRef } from "../components/PlinkoCanvas.tsx";
 export interface UsePlay {
   play: () => void;
   canPlay: boolean;
-}
-
-/** Per-ball stake the house limit allows for `count` balls (floor). */
-export function perBallMaxBet(maxBet: bigint, count: number): bigint {
-  return count > 0 ? maxBet / BigInt(count) : 0n;
-}
-
-/** True when `bet` per ball × `count` fits the balance and the house limit. */
-export function canAffordDrop(
-  bet: bigint,
-  count: number,
-  balance: bigint,
-  maxBet: bigint,
-): boolean {
-  if (bet <= 0n || count < 1) return false;
-  return bet * BigInt(count) <= balance && bet <= perBallMaxBet(maxBet, count);
 }
 
 let nextDropId = 1;

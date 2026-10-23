@@ -52,7 +52,7 @@ debited once, the house must cover the top payout on every ball, each ball
 draws its own random bits, and the summed payout is credited once. The
 frontend uses `playMany` for every drop (count 1 included) and staggers the
 balls on the board. The cap is `MAX_BALLS_PER_DROP` in `packages/shared`
-(10 today); the Candid count is a `Nat16`, so raising it is a one-line change.
+(1000 today); the Candid count is a `Nat16`, so raising it is a one-line change.
 
 **Withdraw**: the player approves the BTC ledger fee; `withdraw` debits the
 internal balance (persisted *before* the transfer await), pulls the fee, sends

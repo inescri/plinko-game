@@ -7,16 +7,15 @@ import {
   percentOf,
   placesOf,
 } from "../lib/amounts.ts";
+import { perBallCap, perBallMaxBet } from "../lib/drop.ts";
 
 export default function BetControls() {
   const { bet, balance, maxBet, token, ballCount } = useGameState();
   const dispatch = useGameDispatch();
   const places = token ? placesOf(token) : 0;
-  // Per-ball cap: the whole drop (bet × ballCount) must fit both the
-  // balance and the house limit.
   const count = BigInt(Math.max(1, ballCount));
-  const perBallHouseMax = maxBet / count;
-  const cap = minBigInt(balance / count, perBallHouseMax);
+  const perBallHouseMax = perBallMaxBet(maxBet, ballCount);
+  const cap = perBallCap(balance, maxBet, ballCount);
   const total = bet * count;
 
   // Local text so the user can type freely; committed as bigint on change.

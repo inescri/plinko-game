@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import { MAX_BALLS_PER_DROP } from "@plinko/shared";
 import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
+import { clampBallCount } from "../lib/drop.ts";
 
 /** Quick picks; anything up to MAX_BALLS_PER_DROP can be typed in the field. */
 const PRESETS = [1, 10, 50, 100].filter((n) => n <= MAX_BALLS_PER_DROP);
 
-export default function BallCountSelector() {
+export default function BallCountSelector(): ReactElement {
   const { ballCount } = useGameState();
   const dispatch = useGameDispatch();
 
@@ -21,7 +22,7 @@ export default function BallCountSelector() {
     // The reducer clamps to 1..MAX_BALLS_PER_DROP; resync the field so an
     // out-of-range value never lingers on screen.
     dispatch({ type: "SET_BALL_COUNT", payload: next });
-    setText(String(Math.min(MAX_BALLS_PER_DROP, Math.max(1, next))));
+    setText(String(clampBallCount(next)));
   };
 
   return (

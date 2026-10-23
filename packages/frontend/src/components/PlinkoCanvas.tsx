@@ -75,24 +75,39 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
 
   const dropsRef = useRef(new Map<number, PendingDrop>());
 
+  /** Publish a finished drop's tally. */
+  const reportDrop = useRef((pending: PendingDrop) => {
+    dispatchRef.current({
+      type: "SET_LAST_DROP",
+      payload: {
+        count: pending.count,
+        totalBet: pending.totalBet,
+        totalPayout: pending.totalPayout,
+      },
+    });
+  }).current;
+
   const spawnDrop = useRef((drop: DropSpawn) => {
     if (drop.balls.length === 0) return;
     const { W, H } = dimsRef.current;
-    const totalPayout = drop.balls.reduce((sum, b) => sum + b.payout, 0n);
-    if (W <= 0 || H <= 0) {
-      // Nothing to animate on, but the result is settled: still report it.
-      dispatchRef.current({
-        type: "SET_LAST_DROP",
-        payload: { count: drop.balls.length, totalBet: drop.totalBet, totalPayout },
-      });
-      return;
-    }
-    dropsRef.current.set(drop.dropId, {
+    const pending: PendingDrop = {
       remaining: drop.balls.length,
       count: drop.balls.length,
       totalBet: drop.totalBet,
-      totalPayout,
-    });
+      totalPayout: drop.balls.reduce((sum, b) => sum + b.payout, 0n),
+    };
+    if (W <= 0 || H <= 0) {
+      // Nothing to animate on, but the result is settled: still report it,
+      // last ball included, so the player sees why the balance moved.
+      const last = drop.balls[drop.balls.length - 1];
+      dispatchRef.current({
+        type: "SET_LAST_WIN",
+        payload: { multiplierX100: last.multiplierX100, payout: last.payout },
+      });
+      reportDrop(pending);
+      return;
+    }
+    dropsRef.current.set(drop.dropId, pending);
     for (const spawn of drop.balls) {
       queueBall(animRef.current, spawn);
     }
@@ -135,26 +150,29 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
 
       if (pegHits > 0) playPegHit();
 
-      for (const { dropId, multiplierX100, payout } of landings) {
+      // Big drops land several balls per frame: report once per frame (the
+      // last ball, and the loudest sound) instead of once per ball, so the
+      // reducer and the audio graph are not hit hundreds of times a second.
+      if (landings.length > 0) {
+        const last = landings[landings.length - 1];
         dispatchRef.current({
           type: "SET_LAST_WIN",
-          payload: { multiplierX100, payout },
+          payload: { multiplierX100: last.multiplierX100, payout: last.payout },
         });
-        playLanding(multiplierX100 / 100);
+        let loudest = 0;
+        for (const l of landings) {
+          if (l.multiplierX100 > loudest) loudest = l.multiplierX100;
+        }
+        playLanding(loudest / 100);
 
-        const pending = dropsRef.current.get(dropId);
-        if (!pending) continue;
-        pending.remaining--;
-        if (pending.remaining <= 0) {
-          dropsRef.current.delete(dropId);
-          dispatchRef.current({
-            type: "SET_LAST_DROP",
-            payload: {
-              count: pending.count,
-              totalBet: pending.totalBet,
-              totalPayout: pending.totalPayout,
-            },
-          });
+        for (const { dropId } of landings) {
+          const pending = dropsRef.current.get(dropId);
+          if (!pending) continue;
+          pending.remaining--;
+          if (pending.remaining <= 0) {
+            dropsRef.current.delete(dropId);
+            reportDrop(pending);
+          }
         }
       }
 

@@ -24,7 +24,8 @@ src/
   canister/actor.ts, useCanisterActor.ts  # typed actor from the delegation identity
   contexts/WalletContext.tsx  # odin-connect state, actor, deposit/fundHouse/withdraw follow-ups, admin check
   contexts/GameContext.tsx    # game state: token, bigint balance/bet, rows, risk
-  hooks/usePlay.ts         # actor.play → canvas.spawnBall
+  hooks/usePlay.ts         # actor.playMany → canvas.spawnDrop
+  lib/drop.ts              # per-ball cap / ball-count clamp shared by reducer, controls, hook
   lib/amounts.ts, fees.ts  # bigint ↔ display conversion, withdraw fee constants
   components/              # UI (FundHouseModal: admin-only, funds the bankroll)
 index.html                 # Vite html entry

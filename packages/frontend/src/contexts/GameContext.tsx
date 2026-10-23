@@ -5,8 +5,9 @@ import {
   type Dispatch,
   type ReactNode,
 } from "react";
-import { MAX_BALLS_PER_DROP, type Risk, type Rows } from "@plinko/shared";
-import { minBigInt, type TokenInfo } from "../lib/amounts.ts";
+import type { Risk, Rows } from "@plinko/shared";
+import type { TokenInfo } from "../lib/amounts.ts";
+import { clampBallCount, perBallCap } from "../lib/drop.ts";
 
 export type { Risk, Rows };
 
@@ -100,17 +101,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "SET_ROWS":
       return { ...state, rows: action.payload };
     case "SET_BALL_COUNT": {
-      const raw = Math.floor(action.payload);
-      if (!Number.isFinite(raw)) return state;
-      const ballCount = Math.min(MAX_BALLS_PER_DROP, Math.max(1, raw));
+      if (!Number.isFinite(action.payload)) return state;
+      const ballCount = clampBallCount(action.payload);
       // More balls shrink the per-ball cap (balance and house limit are
       // shared by the whole drop); pull the bet down so Drop stays enabled.
-      const count = BigInt(ballCount);
-      const cap = minBigInt(state.balance / count, state.maxBet / count);
+      // A zero cap means the balance or house limit is not known yet (or
+      // nothing is affordable): leave the bet alone rather than zero it, as
+      // nothing would put it back once the real limit arrives.
+      const cap = perBallCap(state.balance, state.maxBet, ballCount);
       return {
         ...state,
         ballCount,
-        bet: state.bet > cap ? cap : state.bet,
+        bet: cap > 0n && state.bet > cap ? cap : state.bet,
       };
     }
     case "SET_LAST_WIN":
@@ -118,10 +120,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "SET_LAST_DROP":
       return { ...state, lastDrop: action.payload };
     case "BET_STARTED":
+      // A new drop is on its way: drop the previous tally so it is not read
+      // as the running total of the balls about to land.
       return {
         ...state,
         balance: state.balance - action.payload,
         inFlight: state.inFlight + 1,
+        lastDrop: null,
         playError: null,
       };
     case "BET_SETTLED":
