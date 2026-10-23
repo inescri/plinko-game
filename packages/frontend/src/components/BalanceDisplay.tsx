@@ -8,8 +8,9 @@ export default function BalanceDisplay() {
   const { balance, token, inFlight } = useGameState();
   const { connectedUser, refreshError } = useWallet();
 
-  // Count from the old balance to the new one; a token switch snaps instead.
-  const shown = useTweenedBigInt(balance, 700, token === null);
+  // Count from the old balance to the new one; a token change snaps instead
+  // of counting the old token's balance down to zero.
+  const shown = useTweenedBigInt(balance, 700, token?.id ?? null);
   const formatted = token ? formatFixed(shown, placesOf(token)) : "0.00";
 
   return (

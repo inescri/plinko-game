@@ -10,21 +10,25 @@ function easeOutCubic(t: number): number {
 /**
  * Animate a `bigint` towards `target`: when the target changes, the returned
  * value counts from the previous value to the new one over `durationMs`.
- * The first value (and any change made while `snap` is true) is shown at
- * once. Interpolation stays in `bigint` space so base units are never
- * rounded through a `number`.
+ * The first value, and any change that comes with a new `key` (a different
+ * token: counting one token's balance into another's is meaningless), is
+ * shown at once. Interpolation stays in `bigint` space so base units are
+ * never rounded through a `number`.
  */
 export function useTweenedBigInt(
   target: bigint,
   durationMs = 700,
-  snap = false,
+  key: string | null = null,
 ): bigint {
   const [shown, setShown] = useState(target);
   const shownRef = useRef(target);
   const firstRef = useRef(true);
+  const keyRef = useRef(key);
 
   useEffect(() => {
-    if (firstRef.current || snap || durationMs <= 0) {
+    const keyChanged = keyRef.current !== key;
+    keyRef.current = key;
+    if (firstRef.current || keyChanged || durationMs <= 0) {
       firstRef.current = false;
       shownRef.current = target;
       setShown(target);
@@ -46,7 +50,7 @@ export function useTweenedBigInt(
     };
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [target, durationMs, snap]);
+  }, [target, durationMs, key]);
 
   return shown;
 }

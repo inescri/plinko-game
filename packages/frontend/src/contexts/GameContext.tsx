@@ -132,7 +132,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "SET_LAST_DROP": {
       // A report for a drop that was reset away (token change) must not
       // touch the balance.
-      if (state.inFlight === 0) return { ...state, lastDrop: action.payload };
+      if (state.inFlight === 0) {
+        return { ...state, lastDrop: action.payload, settledBalance: null };
+      }
       const inFlight = state.inFlight - 1;
       // Reveal this drop's payout now that its balls have landed. Once no
       // drop is pending, the canister's answer replaces the local arithmetic.
@@ -163,6 +165,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "BET_SETTLED":
       // Hold the canister's balance: showing it now would give away the
       // outcome before the balls have landed (SET_LAST_DROP reveals it).
+      // A settle for a drop that was reset away (token change) is dropped.
+      if (state.inFlight === 0) return state;
       return { ...state, settledBalance: action.payload };
     case "BET_FAILED": {
       const inFlight = Math.max(0, state.inFlight - 1);

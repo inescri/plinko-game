@@ -48,9 +48,23 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
         // Settle before spawning: a canvas with no size reports the drop as
         // landed synchronously, and that report must find the held balance.
         dispatch({ type: "BET_SETTLED", payload: result.balance });
+        const canvas = canvasRef.current;
+        if (!canvas) {
+          // Nothing to animate: reveal the result at once, else the drop
+          // would stay in flight forever and the balance never update.
+          dispatch({
+            type: "SET_LAST_DROP",
+            payload: {
+              count: result.outcomes.length,
+              totalBet: result.total_bet,
+              totalPayout: result.outcomes.reduce((sum, o) => sum + o.payout, 0n),
+            },
+          });
+          return;
+        }
         const dropId = nextDropId++;
         const stagger = spawnStaggerFrames(result.outcomes.length);
-        canvasRef.current?.spawnDrop({
+        canvas.spawnDrop({
           dropId,
           totalBet: result.total_bet,
           balls: result.outcomes.map((o, i) => ({
