@@ -12,21 +12,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Arcade poster behind the game, tinted so the panels stay readable. */
+}
+
+/* ── Parallax background ── */
+/* Arcade poster behind the game, tinted so the panels stay readable. Taller
+   than the viewport so the parallax shift never exposes the body colour;
+   `ParallaxBackground` moves it with a transform on scroll. */
+.parallax-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 140vh;
+  z-index: -1;
+  pointer-events: none;
   background-image:
     linear-gradient(rgba(5, 5, 15, 0.55), rgba(5, 5, 15, 0.7)),
     url("/arcade-bg.jpg");
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-
-/* iOS Safari mis-renders fixed attachment on a cover image; let it scroll there. */
-@supports (-webkit-touch-callout: none) {
-  body {
-    background-attachment: scroll;
-  }
+  will-change: transform;
 }
 
 #root {

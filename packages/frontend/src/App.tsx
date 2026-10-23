@@ -13,6 +13,7 @@ import LastWin from "./components/LastWin.tsx";
 import DepositModal from "./components/DepositModal.tsx";
 import WithdrawModal from "./components/WithdrawModal.tsx";
 import FundHouseModal from "./components/FundHouseModal.tsx";
+import ParallaxBackground from "./components/ParallaxBackground.tsx";
 import { useWallet } from "./contexts/WalletContext.tsx";
 import { usePlay } from "./hooks/usePlay.ts";
 import { GAME_TOKEN_ID } from "./canister/config.ts";
@@ -67,6 +68,7 @@ export default function App() {
 
   return (
     <div className="container">
+      <ParallaxBackground />
       <h1 className="title">PLINKODIN</h1>
       <div className="top-bar">
         <WalletSection
