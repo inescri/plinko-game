@@ -2,7 +2,7 @@ import { useCallback, useRef, type RefObject } from "react";
 import { useGameDispatch, useGameState } from "../contexts/GameContext.tsx";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { playLaunch } from "../sounds.js";
-import { SPAWN_STAGGER_FRAMES } from "../constants.ts";
+import { spawnStaggerFrames } from "../constants.ts";
 import type { PlinkoCanvasRef } from "../components/PlinkoCanvas.tsx";
 
 /**
@@ -58,6 +58,7 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
       try {
         const result = await actor.playMany(token.id, bet, rows, risk, ballCount);
         const dropId = nextDropId++;
+        const stagger = spawnStaggerFrames(result.outcomes.length);
         canvasRef.current?.spawnDrop({
           dropId,
           totalBet: result.total_bet,
@@ -68,7 +69,7 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
             multiplierX100: o.multiplier_x100,
             payout: o.payout,
             dropId,
-            delayFrames: i * SPAWN_STAGGER_FRAMES,
+            delayFrames: i * stagger,
           })),
         });
         dispatch({ type: "BET_SETTLED", payload: result.balance });

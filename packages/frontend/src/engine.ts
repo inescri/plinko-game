@@ -56,6 +56,13 @@ interface Point {
   y: number;
 }
 
+/** A ball waiting to be released; its geometry is built when it appears. */
+export interface PendingBall {
+  spawn: BallSpawn;
+  /** Remaining frames before the ball appears. */
+  delay: number;
+}
+
 export interface Ball extends BallSpawn {
   /** Waypoints: start, one per row (the gap below each peg row), then the slot. */
   points: Point[];
@@ -68,8 +75,6 @@ export interface Ball extends BallSpawn {
   trail: Point[];
   slot: number;
   active: boolean;
-  /** Remaining frames before the ball starts falling (hidden until 0). */
-  delay: number;
 }
 
 export interface SlotFlash {
@@ -78,6 +83,8 @@ export interface SlotFlash {
 }
 
 export interface AnimationState {
+  /** Balls not yet released; `createBall` runs on release so they always use the current layout. */
+  pending: PendingBall[];
   balls: Ball[];
   pegs: Peg[];
   slots: Slot[];
@@ -169,8 +176,15 @@ export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
     trail: [],
     slot,
     active: true,
-    delay: Math.max(0, Math.floor(spawn.delayFrames)),
   };
+}
+
+/** Queue a ball; it is built against the live layout once its delay elapses. */
+export function queueBall(animState: AnimationState, spawn: BallSpawn): void {
+  animState.pending.push({
+    spawn,
+    delay: Math.max(0, Math.floor(spawn.delayFrames)),
+  });
 }
 
 function easeIn(t: number): number {
@@ -188,17 +202,29 @@ const BOUNCE_AT = 0.45;
 export function updateBalls(
   animState: AnimationState,
   W: number,
+  H: number,
 ): { landings: Landing[]; pegHits: number } {
   const s = getScale(W);
   const landings: Landing[] = [];
   let pegHits = 0;
 
+  // Release due balls. Geometry is computed here, not at spawn time, so a
+  // resize or table change while a drop is still fanning out is honoured.
+  if (animState.pending.length > 0) {
+    const still: PendingBall[] = [];
+    for (const p of animState.pending) {
+      if (p.delay <= 0) {
+        animState.balls.push(createBall(p.spawn, W, H));
+      } else {
+        p.delay--;
+        still.push(p);
+      }
+    }
+    animState.pending = still;
+  }
+
   for (const ball of animState.balls) {
     if (!ball.active) continue;
-    if (ball.delay > 0) {
-      ball.delay--;
-      continue;
-    }
 
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > TRAIL_LENGTH) ball.trail.shift();
@@ -419,7 +445,7 @@ export function draw(
 
   // Balls — neon glow
   for (const ball of animState.balls) {
-    if (!ball.active || ball.delay > 0) continue;
+    if (!ball.active) continue;
 
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ballR + 8 * s, 0, Math.PI * 2);

@@ -8,7 +8,7 @@ import {
 import { useGameState, useGameDispatch } from "../contexts/GameContext.tsx";
 import {
   computeLayout,
-  createBall,
+  queueBall,
   draw,
   updateBalls,
   type AnimationState,
@@ -48,6 +48,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   const dispatch = useGameDispatch();
 
   const animRef = useRef<AnimationState>({
+    pending: [],
     balls: [],
     pegs: [],
     slots: [],
@@ -93,7 +94,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
       totalPayout,
     });
     for (const spawn of drop.balls) {
-      animRef.current.balls.push(createBall(spawn, W, H));
+      queueBall(animRef.current, spawn);
     }
   }).current;
 
@@ -130,7 +131,7 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
     function loop() {
       if (!ctx) return;
       const { W, H } = dimsRef.current;
-      const { landings, pegHits } = updateBalls(animRef.current, W);
+      const { landings, pegHits } = updateBalls(animRef.current, W, H);
 
       if (pegHits > 0) playPegHit();
 
