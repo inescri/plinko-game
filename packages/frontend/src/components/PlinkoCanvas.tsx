@@ -22,9 +22,24 @@ interface Dimensions {
   H: number;
 }
 
+/** One resolved `playMany` call: every ball shares `dropId`. */
+export interface DropSpawn {
+  dropId: number;
+  totalBet: bigint;
+  balls: BallSpawn[];
+}
+
 export interface PlinkoCanvasRef {
-  /** Animate a bet the canister already resolved. */
-  spawnBall: (spawn: BallSpawn) => void;
+  /** Animate a drop the canister already resolved. */
+  spawnDrop: (drop: DropSpawn) => void;
+}
+
+/** Balls of a drop still falling, and the tally so far. */
+interface PendingDrop {
+  remaining: number;
+  count: number;
+  totalBet: bigint;
+  totalPayout: bigint;
 }
 
 const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
@@ -57,13 +72,32 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
   const dispatchRef = useRef<Dispatch<GameAction>>(dispatch);
   dispatchRef.current = dispatch;
 
-  const spawnBall = useRef((spawn: BallSpawn) => {
+  const dropsRef = useRef(new Map<number, PendingDrop>());
+
+  const spawnDrop = useRef((drop: DropSpawn) => {
+    if (drop.balls.length === 0) return;
     const { W, H } = dimsRef.current;
-    if (W <= 0 || H <= 0) return;
-    animRef.current.balls.push(createBall(spawn, W, H));
+    const totalPayout = drop.balls.reduce((sum, b) => sum + b.payout, 0n);
+    if (W <= 0 || H <= 0) {
+      // Nothing to animate on, but the result is settled: still report it.
+      dispatchRef.current({
+        type: "SET_LAST_DROP",
+        payload: { count: drop.balls.length, totalBet: drop.totalBet, totalPayout },
+      });
+      return;
+    }
+    dropsRef.current.set(drop.dropId, {
+      remaining: drop.balls.length,
+      count: drop.balls.length,
+      totalBet: drop.totalBet,
+      totalPayout,
+    });
+    for (const spawn of drop.balls) {
+      animRef.current.balls.push(createBall(spawn, W, H));
+    }
   }).current;
 
-  useImperativeHandle(ref, () => ({ spawnBall }), [spawnBall]);
+  useImperativeHandle(ref, () => ({ spawnDrop }), [spawnDrop]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,12 +134,27 @@ const PlinkoCanvas = forwardRef<PlinkoCanvasRef>(function PlinkoCanvas(_, ref) {
 
       if (pegHits > 0) playPegHit();
 
-      for (const { multiplierX100, payout } of landings) {
+      for (const { dropId, multiplierX100, payout } of landings) {
         dispatchRef.current({
           type: "SET_LAST_WIN",
           payload: { multiplierX100, payout },
         });
         playLanding(multiplierX100 / 100);
+
+        const pending = dropsRef.current.get(dropId);
+        if (!pending) continue;
+        pending.remaining--;
+        if (pending.remaining <= 0) {
+          dropsRef.current.delete(dropId);
+          dispatchRef.current({
+            type: "SET_LAST_DROP",
+            payload: {
+              count: pending.count,
+              totalBet: pending.totalBet,
+              totalPayout: pending.totalPayout,
+            },
+          });
+        }
       }
 
       draw(ctx, animRef.current, W, H, tableRef.current.risk);

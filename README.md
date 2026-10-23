@@ -26,7 +26,7 @@ flowchart LR
     fe --> oc
     oc --> popup
     popup -->|icrc2_approve| odin
-    fe -->|"deposit / withdraw / play / getBalances"| can
+    fe -->|"deposit / withdraw / playMany / getBalances"| can
     can --> ledger
     can -->|"icrc2_transfer_from (deposit, fee)<br/>icrc1_transfer (withdraw)"| odin
 ```
@@ -45,6 +45,14 @@ house, and returns the path. The frontend only animates that path; the landing
 slot is the number of "right" steps. Multiplier tables live in
 `packages/shared` and are the same source for the canister and the board
 labels.
+
+**Multi-ball drops**: `playMany(token, bet, rows, risk, count)` resolves
+`count` balls at the same per-ball bet in one atomic call: the whole stake is
+debited once, the house must cover the top payout on every ball, each ball
+draws its own random bits, and the summed payout is credited once. The
+frontend uses `playMany` for every drop (count 1 included) and staggers the
+balls on the board. The cap is `MAX_BALLS_PER_DROP` in `packages/shared`
+(10 today); the Candid count is a `Nat16`, so raising it is a one-line change.
 
 **Withdraw**: the player approves the BTC ledger fee; `withdraw` debits the
 internal balance (persisted *before* the transfer await), pulls the fee, sends
@@ -143,6 +151,7 @@ be exercised; the full flow needs `--network ic`.
 | `deposit(token, amount)` | update | Pull pre-approved funds from the Odin ledger and credit the caller.    |
 | `withdraw(token, amount)`| update | Debit the caller and send tokens back via the Odin ledger.             |
 | `play(token, bet, rows, risk)` | update | Resolve one bet; returns `{ path, slot, multiplier_x100, payout, balance }`. |
+| `playMany(token, bet, rows, risk, count)` | update | Resolve `count` balls (≤ `MAX_BALLS_PER_DROP`) at one per-ball bet; returns `{ outcomes[], total_bet, total_payout, balance }`. |
 | `fundHouse(token, amount)` | update | Pull pre-approved funds into the house bankroll (permissionless).    |
 | `withdrawHouse(token, amount)` | update | Owner-only: move bankroll to the owner.                          |
 | `getBalance(token)`      | query  | Caller's internal balance for one token.                               |

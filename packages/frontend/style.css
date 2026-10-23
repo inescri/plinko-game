@@ -261,6 +261,35 @@ body {
   box-shadow: 0 0 10px rgba(188, 19, 254, 0.3);
 }
 
+/* ── Ball Count Selector ── */
+.ball-count-input {
+  width: 56px;
+  background: rgba(15, 10, 40, 0.8);
+  border: 1px solid rgba(188, 19, 254, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 4px;
+  text-align: center;
+  outline: none;
+  transition: all 0.3s;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.ball-count-input::-webkit-outer-spin-button,
+.ball-count-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ball-count-input:focus {
+  border-color: #bc13fe;
+  box-shadow: 0 0 12px rgba(188, 19, 254, 0.3);
+}
+
 /* ── Risk Selector ── */
 .risk-selector {
   display: flex;
@@ -414,6 +443,12 @@ body {
   font-weight: 700;
   color: #ffc800;
   text-shadow: 0 0 8px rgba(255, 200, 0, 0.5);
+}
+
+.last-win-total {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 200, 0, 0.8);
 }
 
 /* ── Wallet ── */

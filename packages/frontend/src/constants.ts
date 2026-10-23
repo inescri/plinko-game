@@ -12,6 +12,8 @@ export const TRAIL_LENGTH = 8;
 export const ROW_FRAMES = 11;
 /** Frames for the final fall from the last row into the slot. */
 export const LANDING_FRAMES = 8;
+/** Frames between successive balls of one multi-ball drop. */
+export const SPAWN_STAGGER_FRAMES = 5;
 
 /** Returns a scale factor for the given canvas width */
 export function getScale(W: number): number {

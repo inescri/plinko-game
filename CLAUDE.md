@@ -38,8 +38,11 @@ odin-connect 2.x · pnpm workspace (hoisted linker) · Node 22+ · dfx.
   (debit persisted before the transfer await, refund on failure) and the
   interaction-before-effect ordering in `deposit` / `fundHouse` (funds pulled
   before the credit) in `packages/canister/src/index.ts`.
-- `play` must stay synchronous: no `await` between the bet debit and the
-  payout credit, and the house-exposure check stays before the draw.
+- `play` and `playMany` must stay synchronous: no `await` between the bet
+  debit and the payout credit, and the house-exposure check
+  (`houseExposure` / `houseExposureMany`) stays before the draw. The ball cap
+  is `MAX_BALLS_PER_DROP` in `packages/shared/src/index.ts`; raise it there
+  (the Candid count is `Nat16`).
 - The multiplier tables in `packages/shared/src/index.ts` (they set the house
   edge; `pnpm test` asserts 95-99 % return under a fair walk).
 - The Odin ledger id is immutable after install: it is the `ledger_id` init

@@ -7,12 +7,15 @@ import {
   type Risk,
   type Rows,
   houseExposure,
+  houseExposureMany,
+  isBallCount,
+  MAX_BALLS_PER_DROP,
   multiplierX100,
   payoutFor,
   slotFromPath,
 } from "@plinko/shared";
 
-export { houseExposure };
+export { houseExposure, houseExposureMany };
 
 /**
  * Owner string under which the house bankroll is stored in the ledger. It
@@ -55,4 +58,48 @@ export function resolveBet(
   const slot = slotFromPath(path);
   const mult = multiplierX100(risk, rows, slot);
   return { path, slot, multiplierX100: mult, payout: payoutFor(bet, mult) };
+}
+
+/** Bytes needed to draw `count` independent paths. */
+export function randomBytesForMany(rows: Rows, count: number): number {
+  if (!isBallCount(count)) {
+    throw new Error(`count must be between 1 and ${MAX_BALLS_PER_DROP}`);
+  }
+  return randomBytesFor(rows) * count;
+}
+
+export interface BatchOutcome {
+  outcomes: BetOutcome[];
+  /** Sum of every ball's payout, what the house pays the caller in total. */
+  totalPayout: bigint;
+}
+
+/**
+ * Resolve `count` balls at the same bet. Ball `i` reads its own slice of
+ * `bytes` (`randomBytesFor(rows)` bytes each) so outcomes are independent.
+ */
+export function resolveBets(
+  bet: bigint,
+  rows: Rows,
+  risk: Risk,
+  count: number,
+  bytes: Uint8Array,
+): BatchOutcome {
+  const perBall = randomBytesFor(rows);
+  if (bytes.length < randomBytesForMany(rows, count)) {
+    throw new Error("not enough random bytes");
+  }
+  const outcomes: BetOutcome[] = [];
+  let totalPayout = 0n;
+  for (let i = 0; i < count; i++) {
+    const outcome = resolveBet(
+      bet,
+      rows,
+      risk,
+      bytes.subarray(i * perBall, (i + 1) * perBall),
+    );
+    outcomes.push(outcome);
+    totalPayout += outcome.payout;
+  }
+  return { outcomes, totalPayout };
 }

@@ -37,10 +37,12 @@ src/
    — precision loss is a fund-loss bug.
 5. **Validate every update-call input.** Reuse `validateAmount`; reject zero,
    negative, and over-max values.
-6. **`play` stays synchronous.** No `await` between the bet debit and the
-   payout credit; randomness comes from `crypto.getRandomValues` (seeded from
-   `raw_rand`). The house-exposure check before the draw is what keeps every
-   credited payout backed by real funds.
+6. **`play` and `playMany` stay synchronous.** No `await` between the bet
+   debit and the payout credit; randomness comes from `crypto.getRandomValues`
+   (seeded from `raw_rand`). The house-exposure check before the draw
+   (`houseExposure` for one ball, `houseExposureMany` for a drop: every ball
+   in a top slot) is what keeps every credited payout backed by real funds.
+   `playMany` caps the count at `MAX_BALLS_PER_DROP` from `@plinko/shared`.
 7. **The Odin ledger id is immutable after install.** It is the `ledger_id`
    init argument, stored in `config`. Do not add a setter, and do not weaken
    `resolveUpgradeLedgerId` in `postUpgrade`: every balance (players and

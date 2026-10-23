@@ -44,6 +44,10 @@ export interface BallSpawn {
   risk: Risk;
   multiplierX100: number;
   payout: bigint;
+  /** Which drop (one `playMany` call) this ball belongs to. */
+  dropId: number;
+  /** Frames to wait before the ball appears, so a drop fans out. */
+  delayFrames: number;
 }
 
 interface Point {
@@ -63,6 +67,8 @@ export interface Ball extends BallSpawn {
   trail: Point[];
   slot: number;
   active: boolean;
+  /** Remaining frames before the ball starts falling (hidden until 0). */
+  delay: number;
 }
 
 export interface SlotFlash {
@@ -78,6 +84,7 @@ export interface AnimationState {
 }
 
 export interface Landing {
+  dropId: number;
   slot: number;
   multiplierX100: number;
   payout: bigint;
@@ -158,6 +165,7 @@ export function createBall(spawn: BallSpawn, W: number, H: number): Ball {
     trail: [],
     slot,
     active: true,
+    delay: Math.max(0, Math.floor(spawn.delayFrames)),
   };
 }
 
@@ -183,6 +191,10 @@ export function updateBalls(
 
   for (const ball of animState.balls) {
     if (!ball.active) continue;
+    if (ball.delay > 0) {
+      ball.delay--;
+      continue;
+    }
 
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > TRAIL_LENGTH) ball.trail.shift();
@@ -222,6 +234,7 @@ export function updateBalls(
       if (ball.segment >= ball.points.length - 1) {
         ball.active = false;
         landings.push({
+          dropId: ball.dropId,
           slot: ball.slot,
           multiplierX100: ball.multiplierX100,
           payout: ball.payout,
@@ -402,7 +415,7 @@ export function draw(
 
   // Balls — neon glow
   for (const ball of animState.balls) {
-    if (!ball.active) continue;
+    if (!ball.active || ball.delay > 0) continue;
 
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ballR + 8 * s, 0, Math.PI * 2);
