@@ -256,7 +256,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [actor, connectedUser]);
 
   // ── House bankroll for the game token ──────────────────────────────────
-  // Refetched after funding and whenever a bet settles (inFlight drops).
+  // Refetched after funding and whenever a drop finishes (inFlight drops).
   useEffect(() => {
     if (!actor) {
       setHouseBalance(null);

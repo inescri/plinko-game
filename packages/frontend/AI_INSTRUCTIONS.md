@@ -42,7 +42,10 @@ vite.config.ts             # outDir: dist → served by the dfx asset canister
 
 1. **Never trust the client for accounting.** The canister resolves every
    bet and owns every balance. The UI starts calls and replays results; the
-   optimistic debit in `BET_STARTED` is replaced by the canister's answer.
+   optimistic debit in `BET_STARTED` is replaced by the canister's answer,
+   which is held in `settledBalance` and only shown once the drop's last
+   ball has landed (`SET_LAST_DROP`), so the balance never reveals the
+   outcome before the animation ends.
    Keep `engine.ts` free of outcome logic: the landing slot is
    `slotFromPath(path)` from `@plinko/shared`, never a physics result.
 2. **Amounts are `bigint`** base units end-to-end (`GameContext`, actor

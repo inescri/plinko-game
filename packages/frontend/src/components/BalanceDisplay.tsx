@@ -1,13 +1,17 @@
 import { useGameState } from "../contexts/GameContext.tsx";
 import { useWallet } from "../contexts/WalletContext.tsx";
 import { formatFixed, placesOf } from "../lib/amounts.ts";
+import { useTweenedBigInt } from "../hooks/useTweenedBigInt.ts";
 import RefreshBalanceButton from "./RefreshBalanceButton.tsx";
 
 export default function BalanceDisplay() {
   const { balance, token, inFlight } = useGameState();
   const { connectedUser, refreshError } = useWallet();
 
-  const formatted = token ? formatFixed(balance, placesOf(token)) : "0.00";
+  // Count from the old balance to the new one; a token change snaps instead
+  // of counting the old token's balance down to zero.
+  const shown = useTweenedBigInt(balance, 700, token?.id ?? null);
+  const formatted = token ? formatFixed(shown, placesOf(token)) : "0.00";
 
   return (
     <div className="balance-display">

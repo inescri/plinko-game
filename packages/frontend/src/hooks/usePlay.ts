@@ -10,8 +10,9 @@ import type { PlinkoCanvasRef } from "../components/PlinkoCanvas.tsx";
  * Place one drop of `ballCount` balls: the canister resolves them in one
  * `playMany` call, then the canvas replays every returned path. Several drops
  * may be in flight at once; each ball carries its own result. The whole stake
- * (bet × ballCount) is debited optimistically and replaced by the canister's
- * answer when it arrives.
+ * (bet × ballCount) is debited optimistically; the canister's balance is held
+ * back and only shown once the last ball of the drop has landed, so the
+ * balance never gives the outcome away mid-animation.
  */
 export interface UsePlay {
   play: () => void;
@@ -44,9 +45,26 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
     void (async () => {
       try {
         const result = await actor.playMany(token.id, bet, rows, risk, ballCount);
+        // Settle before spawning: a canvas with no size reports the drop as
+        // landed synchronously, and that report must find the held balance.
+        dispatch({ type: "BET_SETTLED", payload: result.balance });
+        const canvas = canvasRef.current;
+        if (!canvas) {
+          // Nothing to animate: reveal the result at once, else the drop
+          // would stay in flight forever and the balance never update.
+          dispatch({
+            type: "SET_LAST_DROP",
+            payload: {
+              count: result.outcomes.length,
+              totalBet: result.total_bet,
+              totalPayout: result.outcomes.reduce((sum, o) => sum + o.payout, 0n),
+            },
+          });
+          return;
+        }
         const dropId = nextDropId++;
         const stagger = spawnStaggerFrames(result.outcomes.length);
-        canvasRef.current?.spawnDrop({
+        canvas.spawnDrop({
           dropId,
           totalBet: result.total_bet,
           balls: result.outcomes.map((o, i) => ({
@@ -59,7 +77,6 @@ export function usePlay(canvasRef: RefObject<PlinkoCanvasRef | null>): UsePlay {
             delayFrames: i * stagger,
           })),
         });
-        dispatch({ type: "BET_SETTLED", payload: result.balance });
       } catch (err) {
         const message =
           err instanceof Error && err.message ? err.message : "Bet failed";
