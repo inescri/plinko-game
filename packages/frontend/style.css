@@ -5,24 +5,28 @@
 }
 
 body {
-  background: #05050f;
+  background-color: #05050f;
   color: #e0e0ff;
   font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Arcade poster behind the game, tinted so the panels stay readable. */
   background-image:
-    radial-gradient(
-      ellipse at 50% 0%,
-      rgba(120, 0, 255, 0.12) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse at 50% 100%,
-      rgba(0, 200, 255, 0.08) 0%,
-      transparent 50%
-    );
+    linear-gradient(rgba(5, 5, 15, 0.55), rgba(5, 5, 15, 0.7)),
+    url("/arcade-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* iOS Safari mis-renders fixed attachment on a cover image; let it scroll there. */
+@supports (-webkit-touch-callout: none) {
+  body {
+    background-attachment: scroll;
+  }
 }
 
 #root {
